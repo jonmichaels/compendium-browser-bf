@@ -1,0 +1,20 @@
+<div class="source-config">
+    <p class="notes">{{ localize "compendium-browser-bf.SourceHint" }}</p>
+
+    {{#each groups}}
+    <fieldset>
+        <legend>{{ label }} ({{ packs.length }})</legend>
+        {{#each packs}}
+        <label class="pack-entry">
+            <input type="checkbox" name="pack-{{ id }}" value="true"
+                   {{ checked enabled }}>
+            <span>{{ label }}</span>
+        </label>
+        {{/each}}
+    </fieldset>
+    {{/each}}
+
+    <footer class="form-footer">
+        <button type="submit"><i class="fas fa-save"></i> Save</button>
+    </footer>
+</div>

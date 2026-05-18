@@ -1,5 +1,6 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 import { getFilterDefinitions, applyAllFilters } from "./compendium-browser-filters.js";
+import { SourceConfig } from "./source-config.js";
 
 export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -530,6 +531,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         html.querySelectorAll("[data-action='close']").forEach(el => {
             el.addEventListener("click", () => this.close());
         });
+
+        // Configure Sources button
+        const sourceBtn = html.querySelector("[data-action='configureSources']");
+        if (sourceBtn) {
+            sourceBtn.addEventListener("click", () => new SourceConfig().render({ force: true }));
+        }
     }
 
     /* -------------------------------------------- */

@@ -40,6 +40,7 @@
       "Basic": "Basic",
       "Advanced": "Advanced"
     },
-    "ConfigureSources": "Configure Sources"
+    "ConfigureSources": "Configure Sources",
+    "SourceHint": "Select which compendium packs to include when browsing. Disabled packs will not appear in search results."
   }
 }
