@@ -382,15 +382,29 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         context.additional = getFilterDefinitions(def.documentClass, typeSet);
         this.#cachedFilterDefs = context.additional;
 
-        // Sources
+        // Sources — deduplicate by packageName, use abbreviation lookup
         const collatedSources = CompendiumBrowser.collateSources();
         context.sources = [];
+        const seenModules = new Set();
         for (const pack of game.packs) {
             if (pack.metadata.type !== def.documentClass) continue;
             if (collatedSources[pack.metadata.id] === false) continue;
-            const abbrev = CompendiumBrowser.PACK_SOURCE_ABBREV[pack.metadata.id];
+
+            const pkgName = pack.metadata.packageName || pack.metadata.id;
+            if (seenModules.has(pkgName)) continue;
+            seenModules.add(pkgName);
+
+            // Look up abbreviation by matching pack ID or packageName prefix
+            let abbrev = null;
+            for (const [key, val] of Object.entries(CompendiumBrowser.PACK_SOURCE_ABBREV)) {
+                if (pack.metadata.id.startsWith(key) || pkgName.startsWith(key)) {
+                    abbrev = val;
+                    break;
+                }
+            }
+
             context.sources.push({
-                key: pack.metadata.id,
+                key: pkgName,
                 label: abbrev || (pack.metadata.label || pack.metadata.packageName || pack.metadata.id).split(" ").slice(0, 3).join(" "),
             });
         }
@@ -541,23 +555,30 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Build a display-ready entry object from a compendium index entry.
      */
     _buildEntry(entry) {
-        // Source from document data. Black Flag stores source as:
-        // - Spells: system.source is a SetField (array of strings)
-        // - Other items: may have system.source.value or be a plain string
-        const src = entry.system?.source;
+        // Determine source: prefer pack abbreviation over document data
         let source = "";
-        if (typeof src === "string") source = src;
-        else if (Array.isArray(src)) source = src.join(", ");
-        else if (src?.value) source = src.value;
 
-        // Fallback: use abbreviated pack source if no per-entry source
-        if (!source) {
-            if (entry.packageName && CompendiumBrowser.PACK_SOURCE_ABBREV[entry.packageName]) {
-                source = CompendiumBrowser.PACK_SOURCE_ABBREV[entry.packageName];
-            } else if (entry.packLabel) {
-                // Fall back to the first 3 words of the pack label
-                source = entry.packLabel.split(" ").slice(0, 3).join(" ");
+        // 1. Check PACK_SOURCE_ABBREV by matching pack IDs that start with known keys
+        const packId = entry.pack || "";
+        const pkgName = entry.packageName || "";
+        for (const [key, abbrev] of Object.entries(CompendiumBrowser.PACK_SOURCE_ABBREV)) {
+            if (packId.startsWith(key) || pkgName.startsWith(key)) {
+                source = abbrev;
+                break;
             }
+        }
+
+        // 2. Fallback: document's system.source
+        if (!source) {
+            const src = entry.system?.source;
+            if (typeof src === "string") source = src;
+            else if (Array.isArray(src)) source = src.join(", ");
+            else if (src?.value) source = src.value;
+        }
+
+        // 3. Final fallback: shortened pack label
+        if (!source && entry.packLabel) {
+            source = entry.packLabel.split(" ").slice(0, 3).join(" ");
         }
         return {
             ...entry,
@@ -659,12 +680,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                         data-tooltip aria-label="${game.i18n.localize("compendium-browser-bf.ConfigureSources")}"></button>
             `);
         }
-        // After the gear button, also inject Advanced toggle
+        // Inject the Advanced toggle before the close button (right side of header)
         if (!this.#filtersLocked) {
-            const title = frame.querySelector('.window-title');
-            if (title) {
-                title.insertAdjacentHTML('afterend', `
-                    <label class="switch mode-toggle" style="display:inline-flex;align-items:center;gap:6px;margin-right:8px">
+            const closeBtn = frame.querySelector('[data-action="close"]');
+            if (closeBtn) {
+                closeBtn.insertAdjacentHTML('beforebegin', `
+                    <label class="switch mode-toggle" style="display:inline-flex;align-items:center;gap:6px">
                         <input type="checkbox" data-action="toggleMode" ${this.#mode === CompendiumBrowser.MODES.ADVANCED ? 'checked' : ''}>
                         <span class="slider"></span>
                         <span class="mode-label" style="font-size:var(--font-size-11);white-space:nowrap">Advanced</span>
@@ -700,7 +721,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Mode toggle + Configure Sources are handled by ApplicationV2 actions
         // (registered in DEFAULT_OPTIONS.actions — no manual listeners needed)
 
-        // Search input (debounced)
+        // Search input (debounced) — uses a stable container
         const searchInput = html.querySelector("input[name='name']");
         if (searchInput) {
             let timeout;
@@ -710,45 +731,47 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             });
         }
 
-        // Clear search
-        const clearBtn = html.querySelector("[data-action='clearName']");
-        if (clearBtn) {
-            clearBtn.addEventListener("click", () => this.#onClearSearch());
-        }
-
-        // Type checkboxes
-        html.querySelectorAll("[data-action='setType']").forEach(el => {
-            el.addEventListener("change", (event) => this.#onSetType(event));
-        });
-
-        // Filter collapsible toggles
-        html.querySelectorAll("[data-action='toggleCollapsed']").forEach(el => {
-            el.addEventListener("click", (event) => this.#onToggleCollapsed(event));
-        });
-
-        // Filter value changes
-        const sidebarEl = html.querySelector(".sidebar");
-        if (sidebarEl) {
+        // All sidebar interactions use event delegation on the persistent app element,
+        // so they survive partial re-renders of the sidebar part.
+        html.addEventListener("click", (event) => {
+            // Clear search button
+            if (event.target.closest("[data-action='clearName']")) {
+                this.#onClearSearch();
+                return;
+            }
+            // Filter collapsible toggle
+            const toggleEl = event.target.closest("[data-action='toggleCollapsed']");
+            if (toggleEl) {
+                event.preventDefault();
+                this.#onToggleCollapsed({ currentTarget: toggleEl });
+                return;
+            }
             // 3-state filter clicks (off → include → exclude → off)
-            sidebarEl.addEventListener("click", (event) => {
-                const stateEl = event.target.closest(".filter-state");
-                if (stateEl) {
-                    event.preventDefault();
-                    this.#onFilterStateClick(stateEl);
-                }
-            });
+            const stateEl = event.target.closest(".filter-state");
+            if (stateEl) {
+                event.preventDefault();
+                this.#onFilterStateClick(stateEl);
+                return;
+            }
+        });
 
-            // Re-render on filter change (sidebar is now a single part)
-            sidebarEl.addEventListener("change", (event) => {
-                if (event.target.closest(".sidebar")) {
-                    this.#onFilterChange(event);
-                }
-            });
-        }
+        // Type checkboxes & other sidebar changes
+        html.addEventListener("change", (event) => {
+            if (event.target.closest("[data-action='setType']")) {
+                this.#onSetType(event);
+                return;
+            }
+            if (event.target.closest(".sidebar")) {
+                this.#onFilterChange(event);
+                return;
+            }
+        });
 
         // Close button
-        html.querySelectorAll("[data-action='close']").forEach(el => {
-            el.addEventListener("click", () => this.close());
+        html.addEventListener("click", (event) => {
+            if (event.target.closest("[data-action='close']")) {
+                this.close();
+            }
         });
     }
 

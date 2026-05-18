@@ -71,9 +71,9 @@
   --icon-size: 14px;
   align-items: center;
   justify-content: center;
-  flex: 0 0 32px;
+  flex: 0 0 28px;
   transition: all 250ms ease;
-  margin: 1px;
+  margin: 0;
   border-radius: 4px;
   padding: 2px;
   color: var(--color-text-secondary);
@@ -120,7 +120,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-right: 8px;
 }
 
 /* ---- Configure Sources Button ---- */
@@ -241,6 +240,11 @@
   display: none;
 }
 
+/* Collapsed filter sets hide their content */
+.compendium-browser .sidebar .filter.collapsed .collapsible-content {
+  display: none;
+}
+
 .compendium-browser .sidebar .filter.filter-set .filter-choice,
 .compendium-browser .sidebar .filter.filter-boolean > label {
   cursor: pointer;
@@ -322,6 +326,12 @@
 .compendium-browser .results .items-header .item-name {
   flex: 1;
   font-size: var(--font-size-13);
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
+  font-weight: normal;
 }
 
 .compendium-browser .results .item-header.item-source {
@@ -393,7 +403,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--color-cool-5-95, #0a0a0f);
+  background: rgba(0, 100, 200, 0.15);
   padding-top: 6px;
   padding-bottom: 4px;
 }
@@ -415,6 +425,11 @@
 /* Entry row — clickable, link cursor on hover */
 .compendium-browser .results .item-row .item-name.rollable {
   cursor: pointer;
+}
+
+/* Alternating entry row backgrounds */
+.compendium-browser .results ol li:nth-child(even) .item-row {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .compendium-browser .results .item-row .item-name.rollable:hover .title {
