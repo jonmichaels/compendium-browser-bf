@@ -1,4 +1,5 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+import { getFilterDefinitions } from "./compendium-browser-filters.js";
 
 export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -231,12 +232,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Filters context: active filter definitions and values.
+     * Filters context: active filter definitions and values for the current tab.
      */
     async _prepareFiltersContext(context) {
-        // Filter definitions come from compendium-browser-filters.js (Task 6).
-        // For now, return empty filter list so the UI renders without errors.
-        context.additional = [];
+        const def = this.#activeTabDef;
+        const types = def.types ? new Set(def.types) : null;
+        context.additional = getFilterDefinitions(def.documentClass, types);
         context.partId = "filters";
         return context;
     }
