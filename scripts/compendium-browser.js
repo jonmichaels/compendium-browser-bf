@@ -21,36 +21,58 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     };
 
     static PARTS = {
-        header:  { template: "modules/compendium-browser-bf/templates/browser-header.hbs" },
-        search:  { template: "modules/compendium-browser-bf/templates/browser-sidebar-search.hbs", container: { id: "sidebar" } },
-        types:   { template: "modules/compendium-browser-bf/templates/browser-sidebar-types.hbs", container: { id: "sidebar" } },
+        header: {
+            id: "header",
+            classes: ["header"],
+            template: "modules/compendium-browser-bf/templates/browser-header.hbs",
+        },
+        search: {
+            id: "sidebar-search",
+            classes: ["filter-element"],
+            container: { id: "sidebar", classes: ["sidebar", "flexcol"] },
+            template: "modules/compendium-browser-bf/templates/browser-sidebar-search.hbs",
+        },
+        types: {
+            id: "sidebar-types",
+            container: { id: "sidebar", classes: ["sidebar", "flexcol"] },
+            template: "modules/compendium-browser-bf/templates/browser-sidebar-types.hbs",
+        },
         filters: {
+            id: "sidebar-filters",
+            container: { id: "sidebar", classes: ["sidebar", "flexcol"] },
             template: "modules/compendium-browser-bf/templates/browser-sidebar-filters.hbs",
-            container: { id: "sidebar" },
             templates: ["modules/compendium-browser-bf/templates/browser-sidebar-filter-set.hbs"],
         },
         results: {
+            id: "results",
+            classes: ["results"],
             template: "modules/compendium-browser-bf/templates/browser-results.hbs",
             templates: ["modules/compendium-browser-bf/templates/browser-entry.hbs"],
             scrollable: [""],
         },
-        footer:  { template: "modules/compendium-browser-bf/templates/browser-footer.hbs" },
-        tabs:    { template: "modules/compendium-browser-bf/templates/browser-tabs.hbs" },
+        footer: {
+            id: "footer",
+            classes: ["footer"],
+            template: "modules/compendium-browser-bf/templates/browser-footer.hbs",
+        },
+        tabs: {
+            id: "tabs",
+            classes: ["tabs", "tabs-left"],
+            template: "modules/compendium-browser-bf/templates/browser-tabs.hbs",
+        },
     };
 
     static TABS = [
-        { tab: "features",    label: "compendium-browser-bf.Tabs.Features",    documentClass: "Item",  types: ["feature"] },
-        { tab: "spells",      label: "compendium-browser-bf.Tabs.Spells",      documentClass: "Item",  types: ["spell"] },
-        { tab: "weapons",     label: "compendium-browser-bf.Tabs.Weapons",     documentClass: "Item",  types: ["weapon"] },
-        { tab: "equipment",   label: "compendium-browser-bf.Tabs.Equipment",   documentClass: "Item",  types: ["gear", "armor", "tool", "container", "sundry", "currency"] },
-        { tab: "consumables", label: "compendium-browser-bf.Tabs.Consumables", documentClass: "Item",  types: ["consumable"] },
-        { tab: "classes",     label: "compendium-browser-bf.Tabs.Classes",     documentClass: "Item",  types: ["class"] },
-        { tab: "subclasses",  label: "compendium-browser-bf.Tabs.Subclasses",  documentClass: "Item",  types: ["subclass"] },
-        { tab: "lineages",    label: "compendium-browser-bf.Tabs.Lineages",    documentClass: "Item",  types: ["lineage"] },
-        { tab: "heritages",   label: "compendium-browser-bf.Tabs.Heritages",   documentClass: "Item",  types: ["heritage"] },
-        { tab: "backgrounds", label: "compendium-browser-bf.Tabs.Backgrounds", documentClass: "Item",  types: ["background"] },
-        { tab: "talents",     label: "compendium-browser-bf.Tabs.Talents",     documentClass: "Item",  types: ["talent"] },
-        { tab: "monsters",    label: "compendium-browser-bf.Tabs.Monsters",    documentClass: "Actor", types: ["npc"] },
+        { tab: "classes",     label: "compendium-browser-bf.Tabs.Classes",     icon: "fas fa-crown",    documentClass: "Item",  types: ["class"] },
+        { tab: "subclasses",  label: "compendium-browser-bf.Tabs.Subclasses",  icon: "fas fa-layer-group", documentClass: "Item",  types: ["subclass"] },
+        { tab: "lineages",    label: "compendium-browser-bf.Tabs.Lineages",    icon: "fas fa-users",    documentClass: "Item",  types: ["lineage"] },
+        { tab: "heritages",   label: "compendium-browser-bf.Tabs.Heritages",   icon: "fas fa-tree",     documentClass: "Item",  types: ["heritage"] },
+        { tab: "talents",     label: "compendium-browser-bf.Tabs.Talents",     icon: "fas fa-star",     documentClass: "Item",  types: ["talent"] },
+        { tab: "backgrounds", label: "compendium-browser-bf.Tabs.Backgrounds", icon: "fas fa-scroll",   documentClass: "Item",  types: ["background"] },
+        { tab: "items",       label: "compendium-browser-bf.Tabs.Items",       icon: "fas fa-suitcase", documentClass: "Item",  types: ["weapon", "armor", "gear", "tool", "container", "sundry", "currency", "consumable", "ammunition"] },
+        { tab: "spells",      label: "compendium-browser-bf.Tabs.Spells",      icon: "fas fa-book",     documentClass: "Item",  types: ["spell"] },
+        { tab: "monsters",    label: "compendium-browser-bf.Tabs.Monsters",    icon: "fas fa-skull",    documentClass: "Actor", types: ["npc"] },
+        { tab: "vehicles",    label: "compendium-browser-bf.Tabs.Vehicles",    icon: "fas fa-ship",     documentClass: "Actor", types: ["vehicle"] },
     ];
 
     static ADVANCED_TABS = [
@@ -67,7 +89,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /* -------------------------------------------- */
 
     /** @type {string} */
-    #activeTab = "features";
+    #activeTab = "classes";
 
     /** @type {number} */
     #mode = CompendiumBrowser.MODES.BASIC;

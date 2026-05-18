@@ -2,18 +2,16 @@
   "compendium-browser-bf": {
     "Title": "Compendium Browser",
     "Tabs": {
-      "Features": "Features",
-      "Spells": "Spells",
-      "Weapons": "Weapons",
-      "Equipment": "Equipment",
-      "Consumables": "Consumables",
       "Classes": "Classes",
       "Subclasses": "Subclasses",
       "Lineages": "Lineages",
       "Heritages": "Heritages",
-      "Backgrounds": "Backgrounds",
       "Talents": "Talents",
+      "Backgrounds": "Backgrounds",
+      "Items": "Items",
+      "Spells": "Spells",
       "Monsters": "Monsters",
+      "Vehicles": "Vehicles",
       "AllItems": "All Items",
       "AllActors": "All Actors"
     },
