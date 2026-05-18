@@ -189,6 +189,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 results.push({
                     ...entry,
                     pack: pack.metadata.id,
+                    packLabel: pack.metadata.label || pack.metadata.packageName || pack.metadata.id,
                     uuid: `Compendium.${pack.metadata.id}.${entry._id}`,
                 });
             }
@@ -516,6 +517,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         if (typeof src === "string") source = src;
         else if (Array.isArray(src)) source = src.join(", ");
         else if (src?.value) source = src.value;
+
+        // Fallback: use compendium pack label if no per-entry source
+        if (!source && entry.packLabel) source = entry.packLabel;
         return {
             ...entry,
             name: entry.name,
