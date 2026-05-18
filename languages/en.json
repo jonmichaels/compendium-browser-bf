@@ -1,0 +1,45 @@
+{
+  "compendium-browser-bf": {
+    "Title": "Compendium Browser",
+    "Tabs": {
+      "Features": "Features",
+      "Spells": "Spells",
+      "Weapons": "Weapons",
+      "Equipment": "Equipment",
+      "Consumables": "Consumables",
+      "Classes": "Classes",
+      "Subclasses": "Subclasses",
+      "Lineages": "Lineages",
+      "Heritages": "Heritages",
+      "Backgrounds": "Backgrounds",
+      "Talents": "Talents",
+      "Monsters": "Monsters",
+      "AllItems": "All Items",
+      "AllActors": "All Actors"
+    },
+    "Footer": {
+      "SelectHint": "Click entries to select. Hold Shift for range select.",
+      "Selected": "{count} selected",
+      "Minimum": "Select at least {min}",
+      "Maximum": "Select at most {max}"
+    },
+    "Filters": {
+      "Source": "Source",
+      "Level": "Level",
+      "School": "School",
+      "Category": "Category",
+      "Properties": "Properties",
+      "Attunement": "Attunement",
+      "Rarity": "Rarity",
+      "Price": "Price",
+      "CR": "Challenge Rating",
+      "Size": "Size",
+      "CreatureType": "Creature Type"
+    },
+    "Mode": {
+      "Basic": "Basic",
+      "Advanced": "Advanced"
+    },
+    "ConfigureSources": "Configure Sources"
+  }
+}
