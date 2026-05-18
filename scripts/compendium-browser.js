@@ -189,12 +189,18 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 // Name filter (case-insensitive prefix match)
                 if (name && !entry.name.toLowerCase().startsWith(name.toLowerCase())) continue;
 
-                // Source filter
+                // Source filter (3-state: 0=off, 1=include-only, -1=exclude)
                 const sourceFilter = filters.find(f => f.key === "source" && f.type === "set");
                 if (sourceFilter?.value) {
-                    const sourceVal = sourceFilter.value[pack.metadata.id] || sourceFilter.value[pack.metadata.packageName];
-                    if (sourceVal === -1) continue;       // explicitly excluded
-                    if (sourceVal !== 1) continue;        // not explicitly included
+                    const values = sourceFilter.value;
+                    const matchKey = Object.keys(values).find(k =>
+                        pack.metadata.id.startsWith(k) || pack.metadata.packageName?.startsWith(k)
+                    );
+                    const state = matchKey ? values[matchKey] : 0;
+                    const hasIncludes = Object.values(values).some(v => v === 1);
+
+                    if (state === -1) continue;             // explicitly excluded — drop this entry
+                    if (hasIncludes && state !== 1) continue; // include-only mode — drop non-included
                 }
 
                 // Custom filters
