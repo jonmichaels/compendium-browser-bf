@@ -1,9 +1,23 @@
 <div class="packs">
     {{#if selectedPackage}}
     <section class="packs-section">
-        <h3>{{ selectedPackage.label }} Packs</h3>
+        <h3>Items</h3>
         <ol class="packs-list">
-            {{#each selectedPackage.packs}}
+            {{#each selectedPackage.items}}
+            <li>
+                <label>
+                    <input type="checkbox" name="pack-{{ id }}" value="true"
+                           {{ checked enabled }}>
+                    <span>{{ label }}</span>
+                </label>
+            </li>
+            {{/each}}
+        </ol>
+    </section>
+    <section class="packs-section">
+        <h3>Actors</h3>
+        <ol class="packs-list">
+            {{#each selectedPackage.actors}}
             <li>
                 <label>
                     <input type="checkbox" name="pack-{{ id }}" value="true"

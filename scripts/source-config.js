@@ -124,7 +124,17 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         }
         if (partId === "content") {
             const pkg = context.packages.find(p => p.id === this.#selectedPackage);
-            context.selectedPackage = pkg || null;
+            if (pkg) {
+                const items = pkg.packs.filter(p => p.type === "Item").sort((a, b) => a.label.localeCompare(b.label));
+                const actors = pkg.packs.filter(p => p.type === "Actor").sort((a, b) => a.label.localeCompare(b.label));
+                context.selectedPackage = {
+                    label: pkg.label,
+                    items,
+                    actors,
+                };
+            } else {
+                context.selectedPackage = null;
+            }
             return context;
         }
         return context;
@@ -135,7 +145,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     /**
      * Handle package selection in the sidebar.
      */
-    static #onSelectPackage(event, target) {
+    #onSelectPackage(event, target) {
         const li = target.closest("[data-package]");
         if (!li) return;
         this.#selectedPackage = li.dataset.package;
