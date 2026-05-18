@@ -1,0 +1,14 @@
+<div>
+    <p class="notes">{{ localize "compendium-browser-bf.SourceHint" }}</p>
+
+    <ol class="package-list">
+        {{#each packages}}
+        <li class="{{#if active}}active{{/if}}" data-package="{{ id }}">
+            <button type="button" class="package" data-action="selectPackage">
+                <span>{{ label }}</span>
+                <span class="count">{{ count }}</span>
+            </button>
+        </li>
+        {{/each}}
+    </ol>
+</div>

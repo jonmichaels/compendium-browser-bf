@@ -1,20 +1,24 @@
-<div class="source-config">
-    <p class="notes">{{ localize "compendium-browser-bf.SourceHint" }}</p>
-
-    {{#each groups}}
-    <fieldset>
-        <legend>{{ label }} ({{ packs.length }})</legend>
-        {{#each packs}}
-        <label class="pack-entry">
-            <input type="checkbox" name="pack-{{ id }}" value="true"
-                   {{ checked enabled }}>
-            <span>{{ label }}</span>
-        </label>
-        {{/each}}
-    </fieldset>
-    {{/each}}
-
-    <footer class="form-footer">
-        <button type="submit"><i class="fas fa-save"></i> Save</button>
-    </footer>
+<div class="packs">
+    {{#if selectedPackage}}
+    <section class="packs-section">
+        <h3>{{ selectedPackage.label }} Packs</h3>
+        <ol class="packs-list">
+            {{#each selectedPackage.packs}}
+            <li>
+                <label>
+                    <input type="checkbox" name="pack-{{ id }}" value="true"
+                           {{ checked enabled }}>
+                    <span>{{ label }}</span>
+                </label>
+            </li>
+            {{/each}}
+        </ol>
+    </section>
+    {{else}}
+    <p class="notes">Select a package from the sidebar to configure its packs.</p>
+    {{/if}}
 </div>
+
+<footer class="form-footer">
+    <button type="submit"><i class="fas fa-save"></i> Save</button>
+</footer>
