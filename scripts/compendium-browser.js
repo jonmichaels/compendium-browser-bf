@@ -169,7 +169,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         const collatedSources = this.collateSources();
 
         // Collect all needed index field paths
-        const fieldSet = new Set(["name", "img", "type"]);
+        const fieldSet = new Set(["name", "img", "type", "system"]);
         for (const f of filters) {
             if (f._keyPath) fieldSet.add(f._keyPath);
         }
@@ -441,12 +441,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 const checked = {};
                 const filterEl = html.querySelector(`[data-filter-id="${filter.key}"]`);
                 if (filterEl) {
-                    filterEl.querySelectorAll("input[type='checkbox']:checked").forEach(el => {
-                        // Extract choice key from name="additional.school.abjuration"
+                    filterEl.querySelectorAll("input[type='hidden']").forEach(el => {
                         const parts = el.name.split(".");
                         const choiceKey = parts[parts.length - 1];
-                        if (choiceKey) {
-                            checked[choiceKey] = true;  // includes _blank
+                        const val = parseInt(el.value, 10) || 0;
+                        if (choiceKey && val !== 0) {
+                            checked[choiceKey] = val;  // 1 = include, -1 = exclude
                         }
                     });
                 }
@@ -536,17 +536,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Build a display-ready entry object from a compendium index entry.
      */
     _buildEntry(entry) {
-        const pack = game.packs.get(entry.pack);
-        // Derive source from the owning module/system title, not pack label.
-        // Black Flag pack labels are content descriptors ("Classes & Subclasses"),
-        // not book names ("ToV Player's Guide"). The packageName gives us
-        // the module/system, whose title is the book-level attribution.
-        let source = pack?.metadata.label || entry.pack;
-        if (pack?.metadata.packageName) {
-            const pkg = game.modules.get(pack.metadata.packageName);
-            if (pkg?.title) source = pkg.title;
-            else if (game.system.id === pack.metadata.packageName) source = game.system.title;
-        }
+        // Source code from the document's system.source.value (e.g. "SRD", "PHB 2024")
+        const source = entry.system?.source?.value ?? "";
         return {
             ...entry,
             name: entry.name,
@@ -633,6 +624,23 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /*  Lifecycle                                    */
     /* -------------------------------------------- */
 
+    /**
+     * Inject the Configure Sources gear button into the window chrome,
+     * matching dnd5e's approach (_renderFrame).
+     * @override
+     */
+    async _renderFrame(options) {
+        const frame = await super._renderFrame(options);
+        if (game.user.isGM) {
+            frame.querySelector('[data-action="close"]')?.insertAdjacentHTML("beforebegin", `
+                <button type="button" class="header-control configure-sources fas fa-cog"
+                        data-action="configureSources"
+                        data-tooltip aria-label="${game.i18n.localize("compendium-browser-bf.ConfigureSources")}"></button>
+            `);
+        }
+        return frame;
+    }
+
     _onRender(context, options) {
         super._onRender(context, options);
 
@@ -687,6 +695,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Filter value changes
         const sidebarEl = html.querySelector(".sidebar");
         if (sidebarEl) {
+            // 3-state filter clicks (off → include → exclude → off)
+            sidebarEl.addEventListener("click", (event) => {
+                const stateEl = event.target.closest(".filter-state");
+                if (stateEl) {
+                    event.preventDefault();
+                    this.#onFilterStateClick(stateEl);
+                }
+            });
+
+            // Re-render on filter change
             sidebarEl.addEventListener("change", (event) => {
                 if (event.target.closest("[data-application-part='filters']")) {
                     this.#onFilterChange(event);
@@ -815,6 +833,20 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /** Re-render results when a filter value changes. */
     #onFilterChange(event) {
         this.render({ parts: ["results"] });
+    }
+
+    /**
+     * Cycle 3-state filter: 0 (off) → 1 (include/green) → -1 (exclude/red) → 0
+     * Updates the hidden input value and data-value attribute.
+     */
+    #onFilterStateClick(stateEl) {
+        let value = parseInt(stateEl.dataset.value || "0", 10);
+        value = value >= 1 ? -1 : value <= -1 ? 0 : 1;  // 0→1, 1→-1, -1→0
+        stateEl.dataset.value = value;
+        // Update the associated hidden input for form/reading
+        const input = stateEl.parentElement?.querySelector("input[name]");
+        if (input) input.value = value;
+        this.#onFilterChange();
     }
 
     /** Click an entry row to toggle selection with Shift-range support. */

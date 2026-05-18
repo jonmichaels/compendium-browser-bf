@@ -1,20 +1,26 @@
 /* ==========================================================================
    Compendium Browser — Black Flag / Tales of the Valiant
-   Adapted from dnd5e's built-in compendium browser styles
+   Ported from dnd5e's compendium browser (less/v2/compendium-browser.less)
    ========================================================================== */
 
 /* ---- Application Shell ---- */
 .compendium-browser {
   --icon-size: 32px;
+  --header-height: 30px;
   border: none;
 }
 
-/* ---- Vertical Tabs (positioned outside left edge) ----
-   dnd5e implements vertical-tabs with pure CSS because it's NOT
-   a core Foundry v13 feature. The nav uses position:absolute with
-   right:100% to render left of the application window. */
+/* ---- Window Resize Handle ---- */
+.compendium-browser .window-resize-handle {
+  inset: auto 0 0 auto;
+  z-index: 1;
+}
+
+/* ---- Vertical Tabs ---- */
 .compendium-browser.vertical-tabs {
-  overflow: visible !important; /* override any clipping from .window-app */
+  position: relative; /* anchor for nav.tabs absolute positioning */
+  box-shadow: none;
+  overflow: visible;
 }
 
 .compendium-browser.vertical-tabs::after {
@@ -29,52 +35,39 @@
 
 .compendium-browser.vertical-tabs nav.tabs {
   --tab-full-width: 41px;
+  width: var(--tab-full-width);
   position: absolute;
-  top: 36px; /* offset below title bar */
+  top: 64px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  z-index: 2;
-  width: var(--tab-full-width);
+  z-index: -1;
   background: var(--color-bg-option, #1a1a2e);
   border: 1px solid var(--color-border-dark-primary);
 }
 
-.compendium-browser.vertical-tabs nav.tabs:empty {
-  display: none;
-}
+.compendium-browser.vertical-tabs nav.tabs:empty { display: none; }
 
-/* Position on LEFT side of the application */
-.compendium-browser.vertical-tabs nav.tabs.tabs-left {
-  right: 100%;
-  border-right: none;
-  border-radius: 6px 0 0 6px;
-}
-
-/* Tab items — compact vertical buttons with icons */
 .compendium-browser.vertical-tabs nav.tabs > .item {
   --icon-size: 14px;
   align-items: center;
   justify-content: center;
-  flex: 0 0 34px;
+  flex: 0 0 30px;
   transition: all 250ms ease;
-  margin: 4px;
+  margin: 5px;
   border-radius: 4px;
   color: var(--color-text-secondary);
   height: unset;
 }
 
-.compendium-browser.vertical-tabs nav.tabs > .item:not([hidden]) {
-  display: flex;
-}
+.compendium-browser.vertical-tabs nav.tabs > .item:not([hidden]) { display: flex; }
 
 .compendium-browser.vertical-tabs nav.tabs > .item i {
   font-size: var(--font-size-14);
   margin: 0;
 }
 
-/* Active + hover — high contrast */
 .compendium-browser.vertical-tabs nav.tabs > .item.active,
 .compendium-browser.vertical-tabs nav.tabs > .item:hover {
   text-shadow: none;
@@ -82,15 +75,35 @@
   color: var(--color-text-dark-primary, #111);
 }
 
+.compendium-browser.vertical-tabs nav.tabs.tabs-left {
+  contain: content;
+  right: 100%;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+}
+
+/* ---- Header (Mode Toggle) ---- */
+.compendium-browser .mode-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: end;
+  gap: 4px;
+  z-index: 1;
+}
+
 /* ---- Window Content Grid ---- */
-/* Note: dnd5e uses margin-top: calc(var(--header-size) * -1) to pull
-   content under the header. We use a simpler approach: padding-top
-   to push content below the title bar. */
+.compendium-browser:not(.minimized) .window-content {
+  --header-size: calc(var(--header-height) + var(--font-size-24) + 6px);
+}
+
 .compendium-browser .window-content {
   display: grid;
   grid-template-areas: "sidebar results" "sidebar footer";
   grid-template-columns: 230px auto;
   grid-template-rows: auto 2.75rem;
+  margin-top: calc(var(--header-size) * -1);
   padding: 0;
   overflow: hidden;
   column-gap: 0;
@@ -112,92 +125,33 @@
   grid-area: footer;
 }
 
-/* Header — positioned at top of window-content */
 .compendium-browser .window-content > .header {
   position: absolute;
   top: 0;
-  left: 230px; /* offset by sidebar width */
-  right: 0;
-  z-index: 3;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, var(--color-cool-5-95, #0a0a0f), transparent);
 }
 
-.compendium-browser .window-content > .header > * {
-  pointer-events: auto;
-}
-
-/* ---- Mode Toggle (Advanced switch) ---- */
-.compendium-browser .mode-toggle {
-  display: flex;
-  align-items: center;
-}
-
-.compendium-browser .mode-toggle .switch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.compendium-browser .mode-toggle .switch input[type=checkbox] {
-  display: none;
-}
-
-.compendium-browser .mode-toggle .switch .slider {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  background: var(--color-bg-option, #333);
-  border-radius: 10px;
-  transition: background 200ms ease;
-  flex-shrink: 0;
-}
-
-.compendium-browser .mode-toggle .switch .slider::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: var(--color-text-primary, #fff);
-  border-radius: 50%;
-  transition: transform 200ms ease;
-}
-
-.compendium-browser .mode-toggle .switch input:checked + .slider {
-  background: var(--color-level-warning, #c9a43e);
-}
-
-.compendium-browser .mode-toggle .switch input:checked + .slider::after {
-  transform: translateX(16px);
-}
-
-.compendium-browser .mode-toggle .switch .mode-label {
-  font-size: var(--font-size-13);
-  color: var(--color-text-secondary);
-}
-
-/* ---- Configure Sources Button ---- */
-.compendium-browser .configure-sources {
-  font-size: var(--font-size-13);
-  background: none;
-  border: 1px solid var(--color-border-dark-primary);
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-}
-
-.compendium-browser .configure-sources:hover {
+/* ---- Results Heading (big centered title) ---- */
+.compendium-browser .window-content h2 {
   color: var(--color-text-primary);
-  border-color: var(--color-border-highlight);
+  text-shadow: none;
+  font-size: var(--font-size-24);
+  font-weight: bold;
+  text-align: center;
+  margin: 0 0 10px 0;
+}
+
+/* ---- Tab Navigation (inside results? no — handled by vertical-tabs) ---- */
+.compendium-browser nav.tabs {
+  top: 64px;
+}
+
+.compendium-browser nav.tabs > .item {
+  --icon-size: 20px;
+  height: 44px;
+}
+
+.compendium-browser nav.tabs > .item i {
+  font-size: var(--font-size-20);
 }
 
 /* ---- Sidebar ---- */
@@ -205,7 +159,7 @@
   height: 100%;
   overflow-y: auto;
   gap: 12px;
-  padding: 36px 4px 3px 12px; /* top padding accounts for header overlap */
+  padding: 6px 4px 3px 12px;
   scrollbar-gutter: stable;
 }
 
@@ -216,9 +170,7 @@
   gap: 4px;
 }
 
-.compendium-browser .sidebar [data-application-part="types"][hidden] {
-  display: none;
-}
+.compendium-browser .sidebar [data-application-part="types"][hidden] { display: none; }
 
 .compendium-browser .sidebar .type-entry,
 .compendium-browser .sidebar .type-group-header {
@@ -237,9 +189,7 @@
 }
 
 /* ---- Filters Section ---- */
-.compendium-browser .sidebar [data-application-part="filters"] {
-  gap: 8px;
-}
+.compendium-browser .sidebar [data-application-part="filters"] { gap: 8px; }
 
 .compendium-browser .sidebar .filter-header > label {
   cursor: pointer;
@@ -249,9 +199,7 @@
   font-size: var(--font-size-11);
 }
 
-.compendium-browser .sidebar .filter-header > label > span {
-  flex: none;
-}
+.compendium-browser .sidebar .filter-header > label > span { flex: none; }
 
 .compendium-browser .sidebar .filter-header > label::before,
 .compendium-browser .sidebar .filter-header > label::after {
@@ -259,6 +207,36 @@
   flex-basis: 50%;
   border-top: 1px dotted var(--color-border-dark-primary);
   align-self: center;
+}
+
+/* ---- 3-state Filter (off / include / exclude) ---- */
+.compendium-browser .filter-state {
+  display: inline-block;
+  flex: 0 0 1em;
+  width: 1em;
+  height: 1em;
+  cursor: pointer;
+}
+
+/* Off (value=0): hollow square */
+.compendium-browser .filter-state::before {
+  content: "\f0c8"; /* fa-square */
+  font-family: var(--font-awesome);
+  font-size: 1em;
+  color: var(--color-text-secondary);
+  transition: all 250ms ease;
+}
+
+/* Include (value=1): green check-square */
+.compendium-browser .filter-state[data-value="1"]::before {
+  content: "\f14a"; /* fa-check-square */
+  color: #008000;
+}
+
+/* Exclude (value=-1): red minus-square */
+.compendium-browser .filter-state[data-value="-1"]::before {
+  content: "\f146"; /* fa-minus-square */
+  color: #b92e24;
 }
 
 .compendium-browser .sidebar .filter > label {
@@ -344,9 +322,7 @@
   scrollbar-gutter: stable;
 }
 
-.compendium-browser .results > .note {
-  margin-inline: 4px;
-}
+.compendium-browser .results > .note { margin-inline: 4px; }
 
 .compendium-browser .results .results-loading {
   text-align: center;
@@ -355,17 +331,12 @@
   color: var(--color-text-tertiary);
 }
 
-.compendium-browser .results .results-loading > i {
-  height: 16px;
-}
+.compendium-browser .results .results-loading > i { height: 16px; }
 
 .compendium-browser .results .items-header {
   position: sticky;
-  top: 0;
+  top: calc(var(--results-padding) * -1);
   z-index: 1;
-  background: var(--color-cool-5-95, #0a0a0f);
-  padding-top: 6px;
-  padding-bottom: 4px;
 }
 
 .compendium-browser .results .items-section .item-controls {
@@ -378,11 +349,9 @@
   border-left: 4px solid var(--color-border-highlight);
 }
 
-.compendium-browser .results ol li {
-  margin: 0;
-}
+.compendium-browser .results ol li { margin: 0; }
 
-/* Entry row — clickable, shows link cursor on hover */
+/* Entry row */
 .compendium-browser .results .item-row .item-name.rollable {
   cursor: pointer;
 }
@@ -404,9 +373,7 @@
   font-size: var(--font-size-14);
 }
 
-.compendium-browser .footer:not(:empty) .count .value {
-  font-weight: bold;
-}
+.compendium-browser .footer:not(:empty) .count .value { font-weight: bold; }
 
 .compendium-browser .footer:not(:empty) .count:not(.invalid) .value {
   color: var(--color-text-green);
@@ -417,16 +384,21 @@
 }
 
 /* ---- Minimized State ---- */
-.compendium-browser.minimized.vertical-tabs nav.tabs {
-  display: none;
+.compendium-browser.minimized.vertical-tabs nav.tabs { display: none; }
+.compendium-browser.minimized .mode-toggle { display: none; }
+
+/* ---- Configure Sources Button (in window header chrome) ---- */
+.compendium-browser .header-control.configure-sources {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-14);
+  padding: 0 4px;
 }
 
-.compendium-browser.minimized .mode-toggle {
-  display: none;
-}
-
-.compendium-browser.minimized .configure-sources {
-  display: none;
+.compendium-browser .header-control.configure-sources:hover {
+  color: var(--color-text-primary);
 }
 
 /* ---- Sidebar Button (in Compendium Directory) ---- */
@@ -435,47 +407,102 @@
 }
 
 /* ==========================================================================
-   Source Configuration Dialog
+   Source Configuration Dialog (two-panel: sidebar + packs)
    ========================================================================== */
 
-#compendium-browser-bf-source-config .window-content {
-  padding: 8px 12px;
+#compendium-browser-bf-source-config {
+  --checkbox-size: 16px;
 }
 
-#compendium-browser-bf-source-config .source-config {
+#compendium-browser-bf-source-config .window-content {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  padding: 0;
+}
+
+#compendium-browser-bf-source-config .sidebar {
+  scrollbar-gutter: stable;
+  padding: 6px 4px 0 12px;
+  overflow: hidden auto;
+}
+
+#compendium-browser-bf-source-config .sidebar search {
+  margin-bottom: 16px;
+}
+
+#compendium-browser-bf-source-config .package-list {
+  padding: 0;
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
-#compendium-browser-bf-source-config .notes {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-13);
-  margin: 0;
+#compendium-browser-bf-source-config .package-list li {
+  align-items: center;
+  gap: 8px;
 }
 
-#compendium-browser-bf-source-config fieldset {
-  border: 1px solid var(--color-border-dark-primary);
-  border-radius: 4px;
-  padding: 8px 12px;
+#compendium-browser-bf-source-config .package-list li:not([hidden]) {
+  display: flex;
 }
 
-#compendium-browser-bf-source-config fieldset legend {
+#compendium-browser-bf-source-config .package-list li.active .package {
   font-weight: bold;
-  padding: 0 6px;
 }
 
-#compendium-browser-bf-source-config .pack-entry {
+#compendium-browser-bf-source-config .package-list .package {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 0;
+  justify-content: space-between;
+  border: none;
+  padding: 0;
   cursor: pointer;
-  font-size: var(--font-size-12);
+}
+
+#compendium-browser-bf-source-config .package-list .package:hover {
+  text-shadow: 0 0 6px var(--color-shadow-primary);
+}
+
+#compendium-browser-bf-source-config .packs {
+  display: flex;
+  scrollbar-gutter: stable;
+  padding: 6px 8px 0 4px;
+  overflow: hidden auto;
+  gap: 12px;
+  align-items: start;
+}
+
+#compendium-browser-bf-source-config .packs .packs-section {
+  flex: 1;
+  max-width: 50%;
+}
+
+#compendium-browser-bf-source-config .packs .packs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#compendium-browser-bf-source-config .packs .packs-list li {
+  border-bottom: 1px dotted var(--color-border-dark-primary);
+  padding-bottom: 6px;
+}
+
+#compendium-browser-bf-source-config .packs .packs-list li:last-child {
+  border: none;
+  padding: 0;
+}
+
+#compendium-browser-bf-source-config .packs .packs-list li label {
+  font-size: unset;
+  height: unset;
+  line-height: normal;
 }
 
 #compendium-browser-bf-source-config .form-footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 8px;
+  padding: 8px;
 }

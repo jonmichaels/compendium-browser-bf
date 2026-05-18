@@ -10,18 +10,19 @@
         <div class="wrapper">
             {{~#if config.blank}}
             <span class="filter-choice">
-                <input type="checkbox" name="additional.{{ key }}._blank"
-                       id="{{ @root.partId }}-additional-{{ key }}-_blank"
-                       value="1" {{ checked value._blank }} {{ disabled locked._blank }}>
+                <span class="filter-state" data-value="{{ value._blank }}"
+                      id="{{ @root.partId }}-additional-{{ key }}-_blank"
+                      {{ disabled locked._blank }}></span>
+                <input type="hidden" name="additional.{{ key }}._blank" value="{{ value._blank }}">
                 <label for="{{ @root.partId }}-additional-{{ key }}-_blank">{{ localize config.blank }}</label>
             </span>
             {{/if~}}
             {{~#each config.choices}}
             <span class="filter-choice">
-                <input type="checkbox" name="additional.{{ ../key }}.{{ @key }}"
-                       id="{{ @root.partId }}-additional-{{ ../key }}-{{ @key }}"
-                       value="1" {{ checked (lookup ../value @key) }}
-                       {{ disabled (lookup ../locked @key) }}>
+                <span class="filter-state" data-value="{{ lookup ../value @key }}"
+                      id="{{ @root.partId }}-additional-{{ ../key }}-{{ @key }}"
+                      {{ disabled (lookup ../locked @key) }}></span>
+                <input type="hidden" name="additional.{{ ../key }}.{{ @key }}" value="{{ lookup ../value @key }}">
                 <label for="{{ @root.partId }}-additional-{{ ../key }}-{{ @key }}">{{ localize (ifThen label label this) }}</label>
             </span>
             {{/each~}}
