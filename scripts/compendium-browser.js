@@ -637,6 +637,11 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      */
     async _renderFrame(options) {
         const frame = await super._renderFrame(options);
+
+        // Create container divs (ported from dnd5e's Application5e._renderContainers)
+        this._renderContainers();
+
+        // Inject Configure Sources gear into window chrome
         if (game.user.isGM) {
             frame.querySelector('[data-action="close"]')?.insertAdjacentHTML("beforebegin", `
                 <button type="button" class="header-control configure-sources fas fa-cog"
@@ -645,6 +650,33 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             `);
         }
         return frame;
+    }
+
+    /**
+     * Create container divs for parts that specify a container.
+     * Ported from dnd5e's Application5e — container is NOT a core
+     * ApplicationV2 feature. Without this, shared containers like
+     * #sidebar are silently ignored.
+     */
+    _renderContainers() {
+        const containerEls = Array.from(this.element.querySelectorAll("[data-container-id]"));
+        const containers = Object.fromEntries(containerEls.map(el => [el.dataset.containerId, el]));
+
+        for (const [part, config] of Object.entries(this.constructor.PARTS)) {
+            if (!config.container?.id) continue;
+            const element = this.element.querySelector(`[data-application-part="${part}"]`);
+            if (!element) continue;
+
+            let container = containers[config.container.id];
+            if (!container) {
+                const div = document.createElement("div");
+                div.dataset.containerId = config.container.id;
+                div.classList.add(...(config.container.classes ?? []));
+                container = containers[config.container.id] = div;
+                element.replaceWith(div);
+            }
+            if (element.parentElement !== container) container.append(element);
+        }
     }
 
     _onRender(context, options) {
