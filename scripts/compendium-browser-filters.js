@@ -404,24 +404,68 @@ export function applyFilter(entry, filter) {
 
         case "set": {
             if (!filter.value) return true;  // nothing selected, pass all
-            // Handle _blank (e.g. "No Rarity") - matches empty/falsy values
-            const hasBlank = filter.value._blank;
-            // Handle SetField values (arrays) vs scalar values
-            if (Array.isArray(rawValue)) {
-                if (rawValue.length === 0 && hasBlank) return true;
-                // At least one value must match (for SetField source/tags)
-                for (const val of Object.keys(filter.value)) {
-                    if (val === "_blank") continue;
-                    if (filter.value[val] && rawValue.includes(val)) return true;
-                }
-                return false;
+
+            // Separate includes (value=1) and excludes (value=-1)
+            const includes = {};
+            const excludes = {};
+            let hasIncludes = false;
+            let hasExcludes = false;
+            for (const [key, val] of Object.entries(filter.value)) {
+                if (key === "_blank") continue;  // handled separately
+                if (val === 1) { includes[key] = true; hasIncludes = true; }
+                else if (val === -1) { excludes[key] = true; hasExcludes = true; }
             }
-            // Empty string check
-            if (!rawValue || rawValue === "") return !!hasBlank;
-            // Scalar check
-            const scalarMatch = !!filter.value[rawValue];
-            if (scalarMatch) return true;
-            return false;
+
+            // Handle _blank (No Rarity / empty value)
+            const blankVal = filter.value._blank;
+            const isEmpty = !rawValue || rawValue === "" || (Array.isArray(rawValue) && rawValue.length === 0);
+
+            // ---- Scalar value ---- //
+            if (!Array.isArray(rawValue)) {
+                const strVal = String(rawValue);
+
+                // Check includes: entry must match at least one include
+                if (hasIncludes && !includes[strVal]) return false;
+
+                // Check excludes: entry must NOT match any exclude
+                if (excludes[strVal]) return false;
+
+                // _blank handling
+                if (isEmpty) {
+                    if (blankVal === 1) return true;   // include blank
+                    if (blankVal === -1) return false; // exclude blank (non-blank entries pass)
+                    return !hasIncludes && !hasExcludes; // blank not selected = pass if no active filters
+                }
+                // Non-empty with no matching includes or excludes → passes
+                if (!isEmpty && !hasIncludes && !hasExcludes) return true;
+
+                return true;
+            }
+
+            // ---- Array value (SetField) ---- //
+            // Check excludes first: if ANY array element is excluded, fail
+            if (hasExcludes) {
+                for (const elem of rawValue) {
+                    if (excludes[String(elem)]) return false;
+                }
+            }
+
+            // Check includes: at least one array element must match an include
+            if (hasIncludes) {
+                let matched = false;
+                for (const elem of rawValue) {
+                    if (includes[String(elem)]) { matched = true; break; }
+                }
+                if (!matched) return false;
+            }
+
+            // _blank handling for arrays
+            if (isEmpty) {
+                if (blankVal === 1) return true;
+                if (blankVal === -1) return false;
+            }
+
+            return true;
         }
 
         default:
