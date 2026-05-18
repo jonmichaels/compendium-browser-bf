@@ -537,7 +537,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      */
     _buildEntry(entry) {
         const pack = game.packs.get(entry.pack);
-        const source = pack?.metadata.label || entry.pack;
+        // Derive source from the owning module/system title, not pack label.
+        // Black Flag pack labels are content descriptors ("Classes & Subclasses"),
+        // not book names ("ToV Player's Guide"). The packageName gives us
+        // the module/system, whose title is the book-level attribution.
+        let source = pack?.metadata.label || entry.pack;
+        if (pack?.metadata.packageName) {
+            const pkg = game.modules.get(pack.metadata.packageName);
+            if (pkg?.title) source = pkg.title;
+            else if (game.system.id === pack.metadata.packageName) source = game.system.title;
+        }
         return {
             ...entry,
             name: entry.name,

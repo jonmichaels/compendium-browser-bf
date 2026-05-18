@@ -7,15 +7,14 @@
 .compendium-browser {
   --icon-size: 32px;
   border: none;
-  box-shadow: none;
 }
 
 /* ---- Vertical Tabs (positioned outside left edge) ----
-   dnd5e uses custom CSS because vertical-tabs is NOT a core
-   Foundry v13 feature. The nav is absolutely positioned outside
-   the application using right: 100% with flex-direction: column. */
+   dnd5e implements vertical-tabs with pure CSS because it's NOT
+   a core Foundry v13 feature. The nav uses position:absolute with
+   right:100% to render left of the application window. */
 .compendium-browser.vertical-tabs {
-  overflow: visible;  /* allow tabs to render outside the window */
+  overflow: visible !important; /* override any clipping from .window-app */
 }
 
 .compendium-browser.vertical-tabs::after {
@@ -29,14 +28,15 @@
 }
 
 .compendium-browser.vertical-tabs nav.tabs {
+  --tab-full-width: 41px;
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  z-index: -1;
-  width: 41px;
-  background: var(--color-cool-5-90, #111);
+  z-index: 2;
+  width: var(--tab-full-width);
+  background: var(--color-bg-option, #1a1a2e);
   border: 1px solid var(--color-border-dark-primary);
 }
 
@@ -56,12 +56,12 @@
   --icon-size: 14px;
   align-items: center;
   justify-content: center;
-  flex: 0 0 30px;
+  flex: 0 0 34px;
   transition: all 250ms ease;
-  margin: 5px;
+  margin: 4px;
   border-radius: 4px;
   color: var(--color-text-secondary);
-  height: unset;  /* override horizontal tab height */
+  height: unset;
 }
 
 .compendium-browser.vertical-tabs nav.tabs > .item:not([hidden]) {
@@ -73,69 +73,23 @@
   margin: 0;
 }
 
-/* Active + hover states — high contrast gold-on-dark */
+/* Active + hover — high contrast */
 .compendium-browser.vertical-tabs nav.tabs > .item.active,
 .compendium-browser.vertical-tabs nav.tabs > .item:hover {
   text-shadow: none;
-  background: var(--color-level-warning, gold);
+  background: var(--color-level-warning, #c9a43e);
   color: var(--color-text-dark-primary, #111);
 }
 
-/* ---- Window Resize Handle ---- */
-.compendium-browser .window-resize-handle {
-  inset: auto 0 0 auto;
-  z-index: 1;
-}
-
-/* ---- Header Area (Mode Toggle + Configure Sources) ---- */
-.compendium-browser .header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 8px;
-  pointer-events: none;
-}
-
-.compendium-browser .header > * {
-  pointer-events: auto;
-}
-
-.compendium-browser .mode-toggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.compendium-browser .configure-sources {
-  font-size: var(--font-size-11);
-  background: none;
-  border: 1px solid var(--color-border-dark-primary);
-  border-radius: 4px;
-  padding: 2px 6px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
-}
-
-.compendium-browser .configure-sources:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-border-highlight);
-}
-
 /* ---- Window Content Grid ---- */
-.compendium-browser:not(.minimized) .window-content {
-  --header-size: calc(var(--header-height) + var(--font-size-24) + 6px);
-}
-
+/* Note: dnd5e uses margin-top: calc(var(--header-size) * -1) to pull
+   content under the header. We use a simpler approach: padding-top
+   to push content below the title bar. */
 .compendium-browser .window-content {
   display: grid;
   grid-template-areas: "sidebar results" "sidebar footer";
   grid-template-columns: 230px auto;
   grid-template-rows: auto 2.75rem;
-  margin-top: calc(var(--header-size) * -1);
   padding: 0;
   overflow: hidden;
   column-gap: 0;
@@ -157,12 +111,100 @@
   grid-area: footer;
 }
 
+/* Header — positioned at top of window-content */
+.compendium-browser .window-content > .header {
+  position: absolute;
+  top: 0;
+  left: 230px; /* offset by sidebar width */
+  right: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--color-cool-5-95, #0a0a0f), transparent);
+}
+
+.compendium-browser .window-content > .header > * {
+  pointer-events: auto;
+}
+
+/* ---- Mode Toggle (Advanced switch) ---- */
+.compendium-browser .mode-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.compendium-browser .mode-toggle .switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.compendium-browser .mode-toggle .switch input[type=checkbox] {
+  display: none;
+}
+
+.compendium-browser .mode-toggle .switch .slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--color-bg-option, #333);
+  border-radius: 10px;
+  transition: background 200ms ease;
+  flex-shrink: 0;
+}
+
+.compendium-browser .mode-toggle .switch .slider::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--color-text-primary, #fff);
+  border-radius: 50%;
+  transition: transform 200ms ease;
+}
+
+.compendium-browser .mode-toggle .switch input:checked + .slider {
+  background: var(--color-level-warning, #c9a43e);
+}
+
+.compendium-browser .mode-toggle .switch input:checked + .slider::after {
+  transform: translateX(16px);
+}
+
+.compendium-browser .mode-toggle .switch .mode-label {
+  font-size: var(--font-size-13);
+  color: var(--color-text-secondary);
+}
+
+/* ---- Configure Sources Button ---- */
+.compendium-browser .configure-sources {
+  font-size: var(--font-size-13);
+  background: none;
+  border: 1px solid var(--color-border-dark-primary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.compendium-browser .configure-sources:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-highlight);
+}
+
 /* ---- Sidebar ---- */
 .compendium-browser .sidebar {
   height: 100%;
   overflow-y: auto;
   gap: 12px;
-  padding: 6px 4px 3px 12px;
+  padding: 36px 4px 3px 12px; /* top padding accounts for header overlap */
   scrollbar-gutter: stable;
 }
 
@@ -339,7 +381,7 @@
   margin: 0;
 }
 
-/* ---- Entry Row Styling ---- */
+/* Entry row — clickable, shows link cursor on hover */
 .compendium-browser .results .item-row .item-name.rollable {
   cursor: pointer;
 }
@@ -352,6 +394,7 @@
   font-size: var(--font-size-11);
   color: var(--color-text-secondary);
   text-align: right;
+  white-space: nowrap;
 }
 
 /* ---- Footer ---- */

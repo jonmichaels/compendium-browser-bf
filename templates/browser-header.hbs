@@ -1,13 +1,15 @@
 <div>
     <div class="mode-toggle">
         {{#if showModeToggle}}
-        <slide-toggle class="mode-slider header-control" data-action="toggleMode"
-                      {{ checked isAdvanced }}
-                      id="{{ partId }}-mode-toggle"></slide-toggle>
-        <label for="{{ partId }}-mode-toggle">{{ localize "compendium-browser-bf.Mode.Advanced" }}</label>
+        <label class="switch">
+            <input type="checkbox" data-action="toggleMode" {{ checked isAdvanced }}>
+            <span class="slider"></span>
+            <span class="mode-label">{{ localize "compendium-browser-bf.Mode.Advanced" }}</span>
+        </label>
         {{/if}}
     </div>
-    <button type="button" class="configure-sources" data-action="configureSources">
-        <i class="fas fa-cog"></i> {{ localize "compendium-browser-bf.ConfigureSources" }}
+    <button type="button" class="configure-sources" data-action="configureSources"
+            data-tooltip aria-label="{{ localize 'compendium-browser-bf.ConfigureSources' }}">
+        <i class="fas fa-cog"></i>
     </button>
 </div>
