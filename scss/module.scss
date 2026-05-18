@@ -11,16 +11,22 @@
 }
 
 /* ---- Vertical Tabs (positioned outside left edge) ----
-   Uses position:absolute on nav.tabs with left offset. The application
-   (.window-app) is position:fixed by Foundry core, so the nav positions
-   relative to the window. No overflow/position overrides needed on
-   .vertical-tabs — those broke Foundry. */
+   dnd5e uses position:relative on the application element +
+   nav.tabs with position:absolute + right:100% on .tabs-left.
+   position:relative is safe — it only creates a positioning
+   context, doesn't change layout. The Foundry breakage was from
+   overflow:visible !important, not from position:relative. */
+.compendium-browser.vertical-tabs {
+  position: relative;
+  overflow: visible;
+  box-shadow: none;
+}
+
 .compendium-browser.vertical-tabs nav.tabs {
   --tab-full-width: 41px;
   width: var(--tab-full-width);
   position: absolute;
   top: 28px;
-  left: calc(-1 * var(--tab-full-width));
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -28,12 +34,16 @@
   z-index: 2;
   background: var(--color-bg-option, #1a1a2e);
   border: 1px solid var(--color-border-dark-primary);
-  border-right: none;
-  border-radius: 6px 0 0 6px;
 }
 
 .compendium-browser.vertical-tabs nav.tabs:empty {
   display: none;
+}
+
+.compendium-browser.vertical-tabs nav.tabs.tabs-left {
+  right: 100%;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
 }
 
 /* Tab items — compact vertical buttons with icons */
@@ -93,28 +103,20 @@
   grid-area: footer;
 }
 
-/* Header (mode toggle + configure sources, inside window-content) */
+/* Header — mode toggle in upper-left, matching dnd5e exactly */
 .compendium-browser .window-content > .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px 4px 12px;
+  position: absolute;
+  top: 0;
 }
 
-.compendium-browser .window-content > .header > div {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ---- Mode Toggle ---- */
 .compendium-browser .mode-toggle {
   position: absolute;
   top: 8px;
   left: 8px;
   display: flex;
-  align-items: center;
-  z-index: 2;
+  align-items: end;
+  gap: 4px;
+  z-index: 1;
 }
 
 /* ---- Configure Sources Button ---- */
