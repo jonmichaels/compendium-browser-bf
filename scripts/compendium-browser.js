@@ -85,7 +85,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
     static MODES = { BASIC: 1, ADVANCED: 2 };
     static BATCHING = { MARGIN: 50, SIZE: 50 };
-    static SEARCH_DELAY = 200;
+    static SEARCH_DELAY = 100;
 
     /* -------------------------------------------- */
     /*  Private Fields                              */
@@ -191,8 +191,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 // Type filter
                 if (types.size > 0 && !types.has(entry.type)) continue;
 
-                // Name filter (case-insensitive substring)
-                if (name && !entry.name.toLowerCase().includes(name.toLowerCase())) continue;
+                // Name filter (case-insensitive prefix match)
+                if (name && !entry.name.toLowerCase().startsWith(name.toLowerCase())) continue;
 
                 // Custom filters
                 if (filters.length > 0 && !applyAllFilters(entry, filters)) continue;
@@ -536,8 +536,14 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Build a display-ready entry object from a compendium index entry.
      */
     _buildEntry(entry) {
-        // Source code from the document's system.source.value (e.g. "SRD", "PHB 2024")
-        const source = entry.system?.source?.value ?? "";
+        // Source from document data. Black Flag stores source as:
+        // - Spells: system.source is a SetField (array of strings)
+        // - Other items: may have system.source.value or be a plain string
+        const src = entry.system?.source;
+        let source = "";
+        if (typeof src === "string") source = src;
+        else if (Array.isArray(src)) source = src.join(", ");
+        else if (src?.value) source = src.value;
         return {
             ...entry,
             name: entry.name,

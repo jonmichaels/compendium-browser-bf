@@ -6,38 +6,34 @@
 /* ---- Application Shell ---- */
 .compendium-browser {
   --icon-size: 32px;
+  --header-height: 30px;
   border: none;
 }
 
 /* ---- Vertical Tabs (positioned outside left edge) ----
-   dnd5e implements vertical-tabs with pure CSS because it's NOT
-   a core Foundry v13 feature. The nav uses position:absolute with
-   right:100% to render left of the application window.
-   NOTE: overflow:visible is NOT !important — dnd5e's system CSS
-   handles this at the system level without force-overriding. */
+   Uses position:absolute on nav.tabs with left offset. The application
+   (.window-app) is position:fixed by Foundry core, so the nav positions
+   relative to the window. No overflow/position overrides needed on
+   .vertical-tabs — those broke Foundry. */
 .compendium-browser.vertical-tabs nav.tabs {
   --tab-full-width: 41px;
+  width: var(--tab-full-width);
   position: absolute;
-  top: 36px; /* offset below title bar */
+  top: 28px;
+  left: calc(-1 * var(--tab-full-width));
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   z-index: 2;
-  width: var(--tab-full-width);
   background: var(--color-bg-option, #1a1a2e);
   border: 1px solid var(--color-border-dark-primary);
+  border-right: none;
+  border-radius: 6px 0 0 6px;
 }
 
 .compendium-browser.vertical-tabs nav.tabs:empty {
   display: none;
-}
-
-/* Position on LEFT side of the application */
-.compendium-browser.vertical-tabs nav.tabs.tabs-left {
-  right: 100%;
-  border-right: none;
-  border-radius: 6px 0 0 6px;
 }
 
 /* Tab items — compact vertical buttons with icons */
@@ -62,7 +58,7 @@
   margin: 0;
 }
 
-/* Active + hover — high contrast */
+/* Active + hover — high contrast gold-on-dark */
 .compendium-browser.vertical-tabs nav.tabs > .item.active,
 .compendium-browser.vertical-tabs nav.tabs > .item:hover {
   text-shadow: none;
@@ -71,9 +67,6 @@
 }
 
 /* ---- Window Content Grid ---- */
-/* Note: dnd5e uses margin-top: calc(var(--header-size) * -1) to pull
-   content under the header. We use a simpler approach: padding-top
-   to push content below the title bar. */
 .compendium-browser .window-content {
   display: grid;
   grid-template-areas: "sidebar results" "sidebar footer";
@@ -100,76 +93,28 @@
   grid-area: footer;
 }
 
-/* Header — positioned at top of window-content */
+/* Header (mode toggle + configure sources, inside window-content) */
 .compendium-browser .window-content > .header {
-  position: absolute;
-  top: 0;
-  left: 230px; /* offset by sidebar width */
-  right: 0;
-  z-index: 3;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, var(--color-cool-5-95, #0a0a0f), transparent);
+  padding: 4px 8px 4px 12px;
 }
 
-.compendium-browser .window-content > .header > * {
-  pointer-events: auto;
+.compendium-browser .window-content > .header > div {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* ---- Mode Toggle (Advanced switch) ---- */
+/* ---- Mode Toggle ---- */
 .compendium-browser .mode-toggle {
-  display: flex;
-  align-items: center;
-}
-
-.compendium-browser .mode-toggle .switch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.compendium-browser .mode-toggle .switch input[type=checkbox] {
-  display: none;
-}
-
-.compendium-browser .mode-toggle .switch .slider {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  background: var(--color-bg-option, #333);
-  border-radius: 10px;
-  transition: background 200ms ease;
-  flex-shrink: 0;
-}
-
-.compendium-browser .mode-toggle .switch .slider::after {
-  content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: var(--color-text-primary, #fff);
-  border-radius: 50%;
-  transition: transform 200ms ease;
-}
-
-.compendium-browser .mode-toggle .switch input:checked + .slider {
-  background: var(--color-level-warning, #c9a43e);
-}
-
-.compendium-browser .mode-toggle .switch input:checked + .slider::after {
-  transform: translateX(16px);
-}
-
-.compendium-browser .mode-toggle .switch .mode-label {
-  font-size: var(--font-size-13);
-  color: var(--color-text-secondary);
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  z-index: 2;
 }
 
 /* ---- Configure Sources Button ---- */
@@ -193,7 +138,7 @@
   height: 100%;
   overflow-y: auto;
   gap: 12px;
-  padding: 36px 4px 3px 12px; /* top padding accounts for header overlap */
+  padding: 30px 4px 3px 12px;
   scrollbar-gutter: stable;
 }
 
@@ -399,7 +344,7 @@
   margin: 0;
 }
 
-/* Entry row — clickable, shows link cursor on hover */
+/* Entry row — clickable, link cursor on hover */
 .compendium-browser .results .item-row .item-name.rollable {
   cursor: pointer;
 }
@@ -442,32 +387,18 @@
   display: none;
 }
 
-.compendium-browser.minimized .configure-sources {
-  display: none;
-}
-
-/* ---- Configure Sources Button (in window chrome, injected by _renderFrame) ---- */
-.compendium-browser .header-control.configure-sources {
-  background: none;
-  border: none;
-  cursor: pointer;
+/* ---- Configure Sources Button (in window chrome, by _renderFrame) ---- */
+.compendium-browser .window-header .header-control.configure-sources {
   color: var(--color-text-secondary);
   font-size: var(--font-size-16);
   padding: 0 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
 }
 
-.compendium-browser .header-control.configure-sources:hover {
+.compendium-browser .window-header .header-control.configure-sources:hover {
   color: var(--color-text-primary);
-}
-
-/* ---- Results Heading (big centered title, matching dnd5e) ---- */
-.compendium-browser .window-content h2 {
-  color: var(--color-text-primary);
-  text-shadow: none;
-  font-size: var(--font-size-24);
-  font-weight: bold;
-  text-align: center;
-  margin: 0 0 10px 0;
 }
 
 /* ---- Sidebar Button (in Compendium Directory) ---- */
@@ -524,10 +455,6 @@
   border: none;
   padding: 0;
   cursor: pointer;
-}
-
-#compendium-browser-bf-source-config .package-list .package:hover {
-  text-shadow: 0 0 6px var(--color-shadow-primary);
 }
 
 #compendium-browser-bf-source-config .packs {
