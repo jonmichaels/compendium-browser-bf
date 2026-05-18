@@ -13,7 +13,10 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             resizable: true,
         },
         position: { width: 850, height: 700 },
-        actions: {},
+        actions: {
+            configureSources: CompendiumBrowser.#onConfigureSources,
+            toggleMode: CompendiumBrowser.#onToggleMode,
+        },
         form: {
             handler: CompendiumBrowser.#onHandleSubmit,
             closeOnSubmit: true,
@@ -643,14 +646,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     #attachStaticListeners() {
         const html = this.element;
 
-        // Tab switching — use ApplicationV2's built-in data-action="tab"
-        // (no manual listener needed — handled by ApplicationV2 changeTab)
-
-        // Mode toggle
-        const modeToggle = html.querySelector("[data-action='toggleMode']");
-        if (modeToggle) {
-            modeToggle.addEventListener("change", (event) => this.#onToggleMode(event));
-        }
+        // Mode toggle + Configure Sources are handled by ApplicationV2 actions
+        // (registered in DEFAULT_OPTIONS.actions — no manual listeners needed)
 
         // Search input (debounced)
         const searchInput = html.querySelector("input[name='name']");
@@ -692,12 +689,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         html.querySelectorAll("[data-action='close']").forEach(el => {
             el.addEventListener("click", () => this.close());
         });
-
-        // Configure Sources button
-        const sourceBtn = html.querySelector("[data-action='configureSources']");
-        if (sourceBtn) {
-            sourceBtn.addEventListener("click", () => new SourceConfig().render({ force: true }));
-        }
     }
 
     /**
@@ -763,9 +754,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         this.render({ parts: ["tabs", "search", "types", "filters", "results"] });
     }
 
-    /** Toggle between Basic and Advanced mode. */
-    #onToggleMode(event) {
-        this.#mode = event.target.checked
+    /**
+     * Handle mode toggle switch (Advanced <-> Basic).
+     * @this {CompendiumBrowser}
+     */
+    static #onToggleMode(event, target) {
+        this.#mode = target.checked
             ? CompendiumBrowser.MODES.ADVANCED
             : CompendiumBrowser.MODES.BASIC;
         // Reset to first tab in the new mode
@@ -773,8 +767,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             ? [...CompendiumBrowser.TABS, ...CompendiumBrowser.ADVANCED_TABS]
             : CompendiumBrowser.TABS)[0].tab;
         this.#searchName = "";
-        this.#activeFilters = [];
         this.render({ parts: ["header", "tabs", "search", "types", "filters", "results"] });
+    }
+
+    /**
+     * Open the Configure Sources dialog.
+     * @this {CompendiumBrowser}
+     */
+    static #onConfigureSources(event, target) {
+        new SourceConfig().render({ force: true });
     }
 
     /** Debounced search name change. */

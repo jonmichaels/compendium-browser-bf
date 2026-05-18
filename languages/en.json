@@ -39,6 +39,10 @@
       "Advanced": "Advanced"
     },
     "ConfigureSources": "Configure Sources",
-    "SourceHint": "Select which compendium packs to include when browsing. Disabled packs will not appear in search results."
+    "SourceHint": "Select which compendium packs to include when browsing. Disabled packs will not appear in search results.",
+    "Column": {
+      "Results": "Results",
+      "Source": "Source"
+    }
   }
 }

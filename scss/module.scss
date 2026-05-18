@@ -3,34 +3,126 @@
    Adapted from dnd5e's built-in compendium browser styles
    ========================================================================== */
 
-/* ---- Root Variables ---- */
+/* ---- Application Shell ---- */
 .compendium-browser {
   --icon-size: 32px;
   border: none;
+  box-shadow: none;
 }
 
+/* ---- Vertical Tabs (positioned outside left edge) ----
+   dnd5e uses custom CSS because vertical-tabs is NOT a core
+   Foundry v13 feature. The nav is absolutely positioned outside
+   the application using right: 100% with flex-direction: column. */
+.compendium-browser.vertical-tabs {
+  overflow: visible;  /* allow tabs to render outside the window */
+}
+
+.compendium-browser.vertical-tabs::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 0;
+  border: 1px solid var(--color-border-dark-primary);
+  box-shadow: 0 0 20px var(--color-shadow-dark);
+  border-radius: 5px;
+}
+
+.compendium-browser.vertical-tabs nav.tabs {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  z-index: -1;
+  width: 41px;
+  background: var(--color-cool-5-90, #111);
+  border: 1px solid var(--color-border-dark-primary);
+}
+
+.compendium-browser.vertical-tabs nav.tabs:empty {
+  display: none;
+}
+
+/* Position on LEFT side of the application */
+.compendium-browser.vertical-tabs nav.tabs.tabs-left {
+  right: 100%;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+}
+
+/* Tab items — compact vertical buttons with icons */
+.compendium-browser.vertical-tabs nav.tabs > .item {
+  --icon-size: 14px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  transition: all 250ms ease;
+  margin: 5px;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  height: unset;  /* override horizontal tab height */
+}
+
+.compendium-browser.vertical-tabs nav.tabs > .item:not([hidden]) {
+  display: flex;
+}
+
+.compendium-browser.vertical-tabs nav.tabs > .item i {
+  font-size: var(--font-size-14);
+  margin: 0;
+}
+
+/* Active + hover states — high contrast gold-on-dark */
+.compendium-browser.vertical-tabs nav.tabs > .item.active,
+.compendium-browser.vertical-tabs nav.tabs > .item:hover {
+  text-shadow: none;
+  background: var(--color-level-warning, gold);
+  color: var(--color-text-dark-primary, #111);
+}
+
+/* ---- Window Resize Handle ---- */
 .compendium-browser .window-resize-handle {
   inset: auto 0 0 auto;
   z-index: 1;
 }
 
-/* ---- Mode Toggle (Header) ---- */
-.compendium-browser .mode-toggle {
+/* ---- Header Area (Mode Toggle + Configure Sources) ---- */
+.compendium-browser .header {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  display: flex;
-  align-items: end;
-  gap: 4px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  pointer-events: none;
+}
+
+.compendium-browser .header > * {
+  pointer-events: auto;
+}
+
+.compendium-browser .mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .compendium-browser .configure-sources {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
   font-size: var(--font-size-11);
+  background: none;
+  border: 1px solid var(--color-border-dark-primary);
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}
+
+.compendium-browser .configure-sources:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-highlight);
 }
 
 /* ---- Window Content Grid ---- */
@@ -63,25 +155,6 @@
 
 .compendium-browser .window-content .footer {
   grid-area: footer;
-}
-
-.compendium-browser .window-content > .header {
-  position: absolute;
-  top: 0;
-}
-
-/* ---- Tab Navigation ---- */
-.compendium-browser nav.tabs {
-  top: 64px;
-}
-
-.compendium-browser nav.tabs > .item {
-  --icon-size: 20px;
-  height: 44px;
-}
-
-.compendium-browser nav.tabs > .item i {
-  font-size: var(--font-size-20);
 }
 
 /* ---- Sidebar ---- */
@@ -245,8 +318,11 @@
 
 .compendium-browser .results .items-header {
   position: sticky;
-  top: calc(var(--results-padding) * -1);
+  top: 0;
   z-index: 1;
+  background: var(--color-cool-5-95, #0a0a0f);
+  padding-top: 6px;
+  padding-bottom: 4px;
 }
 
 .compendium-browser .results .items-section .item-controls {
@@ -261,6 +337,21 @@
 
 .compendium-browser .results ol li {
   margin: 0;
+}
+
+/* ---- Entry Row Styling ---- */
+.compendium-browser .results .item-row .item-name.rollable {
+  cursor: pointer;
+}
+
+.compendium-browser .results .item-row .item-name.rollable:hover .title {
+  color: var(--color-text-hyperlink);
+}
+
+.compendium-browser .results .item-detail.item-source {
+  font-size: var(--font-size-11);
+  color: var(--color-text-secondary);
+  text-align: right;
 }
 
 /* ---- Footer ---- */
@@ -282,12 +373,8 @@
 }
 
 /* ---- Minimized State ---- */
-.compendium-browser.minimized nav.tabs {
+.compendium-browser.minimized.vertical-tabs nav.tabs {
   display: none;
-}
-
-.compendium-browser.minimized .window-title {
-  visibility: unset;
 }
 
 .compendium-browser.minimized .mode-toggle {
@@ -298,7 +385,7 @@
   display: none;
 }
 
-/* ---- Sidebar Button ---- */
+/* ---- Sidebar Button (in Compendium Directory) ---- */
 .compendium-sidebar .compendium-browser-btn {
   flex: 0 0 100%;
 }
