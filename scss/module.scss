@@ -1,0 +1,342 @@
+/* ==========================================================================
+   Compendium Browser — Black Flag / Tales of the Valiant
+   Adapted from dnd5e's built-in compendium browser styles
+   ========================================================================== */
+
+/* ---- Root Variables ---- */
+.compendium-browser {
+  --icon-size: 32px;
+  border: none;
+}
+
+.compendium-browser .window-resize-handle {
+  inset: auto 0 0 auto;
+  z-index: 1;
+}
+
+/* ---- Mode Toggle (Header) ---- */
+.compendium-browser .mode-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: end;
+  gap: 4px;
+  z-index: 1;
+}
+
+.compendium-browser .configure-sources {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  font-size: var(--font-size-11);
+}
+
+/* ---- Window Content Grid ---- */
+.compendium-browser:not(.minimized) .window-content {
+  --header-size: calc(var(--header-height) + var(--font-size-24) + 6px);
+}
+
+.compendium-browser .window-content {
+  display: grid;
+  grid-template-areas: "sidebar results" "sidebar footer";
+  grid-template-columns: 230px auto;
+  grid-template-rows: auto 2.75rem;
+  margin-top: calc(var(--header-size) * -1);
+  padding: 0;
+  overflow: hidden;
+  column-gap: 0;
+}
+
+.compendium-browser .window-content:has(> .footer:empty) {
+  grid-template-rows: auto 0;
+}
+
+.compendium-browser .window-content .sidebar {
+  grid-area: sidebar;
+}
+
+.compendium-browser .window-content .results {
+  grid-area: results;
+}
+
+.compendium-browser .window-content .footer {
+  grid-area: footer;
+}
+
+.compendium-browser .window-content > .header {
+  position: absolute;
+  top: 0;
+}
+
+/* ---- Tab Navigation ---- */
+.compendium-browser nav.tabs {
+  top: 64px;
+}
+
+.compendium-browser nav.tabs > .item {
+  --icon-size: 20px;
+  height: 44px;
+}
+
+.compendium-browser nav.tabs > .item i {
+  font-size: var(--font-size-20);
+}
+
+/* ---- Sidebar ---- */
+.compendium-browser .sidebar {
+  height: 100%;
+  overflow-y: auto;
+  gap: 12px;
+  padding: 6px 4px 3px 12px;
+  scrollbar-gutter: stable;
+}
+
+/* ---- Types Section ---- */
+.compendium-browser .sidebar [data-application-part="types"] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.compendium-browser .sidebar [data-application-part="types"][hidden] {
+  display: none;
+}
+
+.compendium-browser .sidebar .type-entry,
+.compendium-browser .sidebar .type-group-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  align-items: center;
+}
+
+.compendium-browser .sidebar .type-entry label,
+.compendium-browser .sidebar .type-group-header label {
+  cursor: pointer;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ---- Filters Section ---- */
+.compendium-browser .sidebar [data-application-part="filters"] {
+  gap: 8px;
+}
+
+.compendium-browser .sidebar .filter-header > label {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  font-size: var(--font-size-11);
+}
+
+.compendium-browser .sidebar .filter-header > label > span {
+  flex: none;
+}
+
+.compendium-browser .sidebar .filter-header > label::before,
+.compendium-browser .sidebar .filter-header > label::after {
+  content: "";
+  flex-basis: 50%;
+  border-top: 1px dotted var(--color-border-dark-primary);
+  align-self: center;
+}
+
+.compendium-browser .sidebar .filter > label {
+  line-height: 1;
+}
+
+.compendium-browser .sidebar .filter .filter-header label > span {
+  color: var(--color-text-secondary);
+}
+
+.compendium-browser .sidebar .filter.filter-set:has(> .collapsible-content > .wrapper:empty) {
+  display: none;
+}
+
+.compendium-browser .sidebar .filter.filter-set .filter-choice,
+.compendium-browser .sidebar .filter.filter-boolean > label {
+  cursor: pointer;
+}
+
+.compendium-browser .sidebar .filter.filter-set .wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ---- Range Filter ---- */
+.compendium-browser .sidebar .filter.filter-range {
+  flex-direction: column;
+  align-items: start;
+  gap: 4px;
+}
+
+.compendium-browser .sidebar .filter.filter-range > .form-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compendium-browser .sidebar .filter.filter-range > label {
+  font-weight: normal;
+  font-size: var(--font-size-11);
+  color: var(--color-text-secondary);
+}
+
+.compendium-browser .sidebar .filter.filter-range .sep {
+  height: var(--form-field-height);
+  display: inline-grid;
+  place-content: center;
+}
+
+.compendium-browser .sidebar .filter.filter-range input[type=number] {
+  --input-border-color: transparent;
+  transition: all 250ms ease;
+  outline: 0;
+  text-align: center;
+  height: unset;
+  line-height: normal;
+  font-size: var(--font-size-11);
+  padding: 6px;
+}
+
+.compendium-browser .sidebar .filter.filter-range input[type=number]:hover,
+.compendium-browser .sidebar .filter.filter-range input[type=number]:focus {
+  --input-border-color: var(--color-border-highlight);
+  outline: 0;
+  box-shadow: 0 0 6px var(--color-border-highlight);
+}
+
+/* ---- Results Area ---- */
+.compendium-browser .results {
+  --results-padding: 6px;
+  padding: var(--results-padding) 4px 12px 4px;
+  margin-right: 4px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.compendium-browser .results > .note {
+  margin-inline: 4px;
+}
+
+.compendium-browser .results .results-loading {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: var(--color-text-tertiary);
+}
+
+.compendium-browser .results .results-loading > i {
+  height: 16px;
+}
+
+.compendium-browser .results .items-header {
+  position: sticky;
+  top: calc(var(--results-padding) * -1);
+  z-index: 1;
+}
+
+.compendium-browser .results .items-section .item-controls {
+  width: 50px;
+  align-items: center;
+  padding: 0;
+}
+
+.compendium-browser .results .item.selected {
+  border-left: 4px solid var(--color-border-highlight);
+}
+
+.compendium-browser .results ol li {
+  margin: 0;
+}
+
+/* ---- Footer ---- */
+.compendium-browser .footer:not(:empty) {
+  padding: 4px 24px;
+  font-size: var(--font-size-14);
+}
+
+.compendium-browser .footer:not(:empty) .count .value {
+  font-weight: bold;
+}
+
+.compendium-browser .footer:not(:empty) .count:not(.invalid) .value {
+  color: var(--color-text-green);
+}
+
+.compendium-browser .footer:not(:empty) .count.invalid .value {
+  color: var(--color-level-error);
+}
+
+/* ---- Minimized State ---- */
+.compendium-browser.minimized nav.tabs {
+  display: none;
+}
+
+.compendium-browser.minimized .window-title {
+  visibility: unset;
+}
+
+.compendium-browser.minimized .mode-toggle {
+  display: none;
+}
+
+.compendium-browser.minimized .configure-sources {
+  display: none;
+}
+
+/* ---- Sidebar Button ---- */
+.compendium-sidebar .compendium-browser-btn {
+  flex: 0 0 100%;
+}
+
+/* ==========================================================================
+   Source Configuration Dialog
+   ========================================================================== */
+
+#compendium-browser-bf-source-config .window-content {
+  padding: 8px 12px;
+}
+
+#compendium-browser-bf-source-config .source-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#compendium-browser-bf-source-config .notes {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-13);
+  margin: 0;
+}
+
+#compendium-browser-bf-source-config fieldset {
+  border: 1px solid var(--color-border-dark-primary);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+#compendium-browser-bf-source-config fieldset legend {
+  font-weight: bold;
+  padding: 0 6px;
+}
+
+#compendium-browser-bf-source-config .pack-entry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  cursor: pointer;
+  font-size: var(--font-size-12);
+}
+
+#compendium-browser-bf-source-config .form-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
