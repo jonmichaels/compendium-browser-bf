@@ -30,6 +30,23 @@
 
     <!-- Filters -->
     <div class="flexcol">
+        {{#if sources.length}}
+        <div class="filter filter-set" data-filter-id="source">
+            <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">SOURCE</span><i class="fa-solid fa-caret-down" inert></i></label></div>
+            <div class="collapsible-content">
+                <div class="wrapper">
+                    {{#each sources}}
+                    <div class="filter-choice">
+                        <label>
+                            <span class="filter-state" data-key="source.{{ key }}" data-value="1"></span>
+                            <span>{{ label }}</span>
+                        </label>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        {{/if}}
         {{#each additional}}
         {{#if (eq type "boolean")}}
         <div class="filter filter-boolean" data-filter-id="{{ key }}">

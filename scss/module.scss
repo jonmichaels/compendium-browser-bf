@@ -73,9 +73,9 @@
   justify-content: center;
   flex: 0 0 32px;
   transition: all 250ms ease;
-  margin: 2px;
+  margin: 1px;
   border-radius: 4px;
-  padding: 4px;
+  padding: 2px;
   color: var(--color-text-secondary);
   text-decoration: none;
   border: none;
@@ -115,14 +115,12 @@
   gap: 4px;
 }
 
-/* ---- Mode Toggle ---- */
+/* ---- Mode Toggle (in window chrome header) ---- */
 .compendium-browser .mode-toggle {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  z-index: 2;
+  gap: 6px;
+  margin-right: 8px;
 }
 
 /* ---- Configure Sources Button ---- */
@@ -146,7 +144,7 @@
   height: 100%;
   overflow-y: auto;
   gap: 12px;
-  padding: 30px 4px 3px 12px;
+  padding: 12px 4px 3px 12px;
   scrollbar-gutter: stable;
 }
 
@@ -309,7 +307,7 @@
 /* Window title — centered, larger */
 .compendium-browser .window-title {
   text-align: center;
-  font-size: var(--font-size-16);
+  font-size: var(--font-size-20);
   flex: 1;
 }
 
@@ -322,7 +320,8 @@
 
 /* Results header row */
 .compendium-browser .results .items-header .item-name {
-  font-size: var(--font-size-14);
+  flex: 1;
+  font-size: var(--font-size-13);
 }
 
 .compendium-browser .results .item-header.item-source {
@@ -388,6 +387,9 @@
 }
 
 .compendium-browser .results .items-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   position: sticky;
   top: 0;
   z-index: 1;

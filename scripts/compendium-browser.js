@@ -24,11 +24,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     };
 
     static PARTS = {
-        header: {
-            id: "header",
-            classes: ["header"],
-            template: "modules/compendium-browser-bf/templates/browser-header.hbs",
-        },
         sidebar: {
             id: "sidebar",
             classes: ["sidebar", "flexcol"],
@@ -75,6 +70,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static MODES = { BASIC: 1, ADVANCED: 2 };
     static BATCHING = { MARGIN: 50, SIZE: 50 };
     static SEARCH_DELAY = 100;
+
+    static PACK_SOURCE_ABBREV = {
+        "kp-tov-players-guide": "ToV PG",
+        "kp-tov-game-masters-guide": "ToV GMG",
+        "kp-tov-monster-vault": "ToV MV",
+        "kp-tov-labyrinth-worldbook": "ToV LW",
+        "kp-tov-labyrinth-adventures": "ToV LA",
+        "kp-tov-dungeons-ruins": "ToV DR",
+    };
 
     /* -------------------------------------------- */
     /*  Private Fields                              */
@@ -183,6 +187,14 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 // Name filter (case-insensitive prefix match)
                 if (name && !entry.name.toLowerCase().startsWith(name.toLowerCase())) continue;
 
+                // Source filter
+                const sourceFilter = filters.find(f => f.key === "source" && f.type === "set");
+                if (sourceFilter?.value) {
+                    const sourceVal = sourceFilter.value[pack.metadata.id] || sourceFilter.value[pack.metadata.packageName];
+                    if (sourceVal === -1) continue;       // explicitly excluded
+                    if (sourceVal !== 1) continue;        // not explicitly included
+                }
+
                 // Custom filters
                 if (filters.length > 0 && !applyAllFilters(entry, filters)) continue;
 
@@ -190,6 +202,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                     ...entry,
                     pack: pack.metadata.id,
                     packLabel: pack.metadata.label || pack.metadata.packageName || pack.metadata.id,
+                    packageName: pack.metadata.packageName,
                     uuid: `Compendium.${pack.metadata.id}.${entry._id}`,
                 });
             }
@@ -305,8 +318,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         return {
             tabs: allTabs,
             activeTab: this.#activeTab,
-            showModeToggle: !this.#filtersLocked,
-            isAdvanced: this.#mode === CompendiumBrowser.MODES.ADVANCED,
             showTypes: true,
             displaySelection: this.#displaySelection,
         };
@@ -321,22 +332,11 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      */
     async _preparePartContext(partId, context, options) {
         switch (partId) {
-            case "header":   return this._prepareHeaderContext(context);
             case "tabs":     return this._prepareTabsContext(context);
             case "sidebar":  return this._prepareSidebarContext(context);
             case "results":  return this._prepareResultsContext(context);
             case "footer":   return this._prepareFooterContext(context);
         }
-        return context;
-    }
-
-    /**
-     * Header context: mode toggle state.
-     */
-    async _prepareHeaderContext(context) {
-        context.showModeToggle = !this.#filtersLocked;
-        context.isAdvanced = this.#mode === CompendiumBrowser.MODES.ADVANCED;
-        context.partId = "header";
         return context;
     }
 
@@ -382,6 +382,19 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         context.additional = getFilterDefinitions(def.documentClass, typeSet);
         this.#cachedFilterDefs = context.additional;
 
+        // Sources
+        const collatedSources = CompendiumBrowser.collateSources();
+        context.sources = [];
+        for (const pack of game.packs) {
+            if (pack.metadata.type !== def.documentClass) continue;
+            if (collatedSources[pack.metadata.id] === false) continue;
+            const abbrev = CompendiumBrowser.PACK_SOURCE_ABBREV[pack.metadata.id];
+            context.sources.push({
+                key: pack.metadata.id,
+                label: abbrev || (pack.metadata.label || pack.metadata.packageName || pack.metadata.id).split(" ").slice(0, 3).join(" "),
+            });
+        }
+
         return context;
     }
 
@@ -426,6 +439,25 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 filter.value = Object.keys(checked).length > 0 ? checked : null;
             }
         }
+
+        // Read source filter values from DOM (not in cachedFilterDefs)
+        const sourceFilterEl = html.querySelector('[data-filter-id="source"]');
+        if (sourceFilterEl) {
+            const sourceChecked = {};
+            sourceFilterEl.querySelectorAll(".filter-state").forEach(el => {
+                const key = el.dataset.key?.split(".")[1];  // "source.packId" → "packId"
+                const val = parseInt(el.dataset.value, 10) || 0;
+                if (key && val !== 0) sourceChecked[key] = val;
+            });
+            if (Object.keys(sourceChecked).length > 0) {
+                filters.push({
+                    key: "source",
+                    type: "set",
+                    value: sourceChecked,
+                });
+            }
+        }
+
         return filters;
     }
 
@@ -518,8 +550,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         else if (Array.isArray(src)) source = src.join(", ");
         else if (src?.value) source = src.value;
 
-        // Fallback: use compendium pack label if no per-entry source
-        if (!source && entry.packLabel) source = entry.packLabel;
+        // Fallback: use abbreviated pack source if no per-entry source
+        if (!source) {
+            if (entry.packageName && CompendiumBrowser.PACK_SOURCE_ABBREV[entry.packageName]) {
+                source = CompendiumBrowser.PACK_SOURCE_ABBREV[entry.packageName];
+            } else if (entry.packLabel) {
+                // Fall back to the first 3 words of the pack label
+                source = entry.packLabel.split(" ").slice(0, 3).join(" ");
+            }
+        }
         return {
             ...entry,
             name: entry.name,
@@ -619,6 +658,19 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                         data-action="configureSources"
                         data-tooltip aria-label="${game.i18n.localize("compendium-browser-bf.ConfigureSources")}"></button>
             `);
+        }
+        // After the gear button, also inject Advanced toggle
+        if (!this.#filtersLocked) {
+            const title = frame.querySelector('.window-title');
+            if (title) {
+                title.insertAdjacentHTML('afterend', `
+                    <label class="switch mode-toggle" style="display:inline-flex;align-items:center;gap:6px;margin-right:8px">
+                        <input type="checkbox" data-action="toggleMode" ${this.#mode === CompendiumBrowser.MODES.ADVANCED ? 'checked' : ''}>
+                        <span class="slider"></span>
+                        <span class="mode-label" style="font-size:var(--font-size-11);white-space:nowrap">Advanced</span>
+                    </label>
+                `);
+            }
         }
         return frame;
     }
@@ -776,7 +828,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             ? [...CompendiumBrowser.TABS, ...CompendiumBrowser.ADVANCED_TABS]
             : CompendiumBrowser.TABS)[0].tab;
         this.#searchName = "";
-        this.render({ parts: ["header", "tabs", "sidebar", "results"] });
+        this.render({ parts: ["tabs", "sidebar", "results"] });
     }
 
     /**
