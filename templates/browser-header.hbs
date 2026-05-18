@@ -1,15 +1,9 @@
-<div>
-    <div class="mode-toggle">
-        {{#if showModeToggle}}
-        <label class="switch">
-            <input type="checkbox" data-action="toggleMode" {{ checked isAdvanced }}>
-            <span class="slider"></span>
-            <span class="mode-label">{{ localize "compendium-browser-bf.Mode.Advanced" }}</span>
-        </label>
-        {{/if}}
-    </div>
-    <button type="button" class="configure-sources" data-action="configureSources"
-            data-tooltip aria-label="{{ localize 'compendium-browser-bf.ConfigureSources' }}">
-        <i class="fas fa-cog"></i>
-    </button>
+<div class="mode-toggle">
+    {{#if showModeToggle}}
+    <label class="switch">
+        <input type="checkbox" data-action="toggleMode" {{ checked isAdvanced }}>
+        <span class="slider"></span>
+        <span class="mode-label">{{ localize "compendium-browser-bf.Mode.Advanced" }}</span>
+    </label>
+    {{/if}}
 </div>

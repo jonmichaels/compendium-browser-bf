@@ -1,0 +1,59 @@
+<!-- Combined sidebar: search + types + filters -->
+<div>
+    <search>
+        <input type="text" name="name" placeholder="{{ localize 'compendium-browser-bf.Tabs.AllItems' }}..."
+               value="{{ name }}">
+        <ul class="unlist controls">
+            <li>
+                <button type="button" class="unbutton filter-control" data-action="clearName"
+                        data-tooltip aria-label="Clear Search">
+                    <i class="fa-solid fa-xmark" inert></i>
+                </button>
+            </li>
+        </ul>
+    </search>
+</div>
+
+<div class="flexcol" {{#unless showTypes}}hidden{{/unless}}>
+    {{#each types}}
+    <div class="type-entry">
+        <label>
+            <input type="checkbox" value="{{ @key }}" data-action="setType"
+                   {{ checked chosen }}>
+            <span>{{ localize label }}</span>
+        </label>
+    </div>
+    {{/each}}
+</div>
+
+<div class="flexcol">
+    {{#each additional}}
+    {{#if (eq type "boolean")}}
+    <div class="filter filter-boolean" data-filter-id="{{ key }}">
+        <span>
+            <input type="checkbox" name="additional.{{ key }}" value="1"
+                   id="sidebar-additional-{{ key }}"
+                   {{ checked value }} {{ disabled locked }}>
+            <label for="sidebar-additional-{{ key }}">{{ localize label }}</label>
+        </span>
+    </div>
+    {{else if (eq type "range")}}
+    <div class="filter filter-range form-group label-top" data-filter-id="{{ key }}">
+        <label>{{ localize label }}</label>
+        <div class="form-fields">
+            <input type="number" name="additional.{{ key }}.min" value="{{ value.min }}"
+                   min="{{ config.min }}" max="{{ config.max }}" step="any"
+                   placeholder="{{ config.min }}" {{ disabled locked.min }}>
+            <span class="sep">&ndash;</span>
+            <input type="number" name="additional.{{ key }}.max" value="{{ value.max }}"
+                   min="{{ config.min }}" max="{{ config.max }}" step="any"
+                   placeholder="{{ config.max }}" {{ disabled locked.max }}>
+        </div>
+    </div>
+    {{else if (eq type "set")}}
+    {{> "modules/compendium-browser-bf/templates/browser-sidebar-filter-set.hbs" }}
+    {{else}}
+    <div class="filter" data-filter-id="{{ key }}">{{ label }}</div>
+    {{/if}}
+    {{/each}}
+</div>
