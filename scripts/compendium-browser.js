@@ -623,24 +623,28 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
     _onRender(context, options) {
         super._onRender(context, options);
-        // Attach event listeners (once-only, guarded internally)
-        this.#activateListeners(context, options);
+
+        // Static listeners — attach only once (tab clicks, mode toggle, search, etc.)
+        if (!this.#listenersAttached) {
+            this.#listenersAttached = true;
+            this.#attachStaticListeners();
+        }
+
+        // Results rendering — run every time the results part is rendered
+        if (!options.parts || options.parts.includes("results")) {
+            this.#attachResults();
+        }
     }
 
     /**
-     * Attach DOM event listeners for tab switching, mode toggle, search, and filters.
+     * Attach static DOM listeners that survive partial re-renders.
+     * These elements are not replaced during tab switches or filter changes.
      */
-    #activateListeners(context, options) {
-        // Only attach static listeners once — partial re-renders would pile up duplicates
-        if (this.#listenersAttached) return;
-        this.#listenersAttached = true;
-
+    #attachStaticListeners() {
         const html = this.element;
 
-        // Tab switching
-        html.querySelectorAll("[data-action='tab']").forEach(el => {
-            el.addEventListener("click", (event) => this.#onClickTab(event));
-        });
+        // Tab switching — use ApplicationV2's built-in data-action="tab"
+        // (no manual listener needed — handled by ApplicationV2 changeTab)
 
         // Mode toggle
         const modeToggle = html.querySelector("[data-action='toggleMode']");
@@ -648,7 +652,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             modeToggle.addEventListener("change", (event) => this.#onToggleMode(event));
         }
 
-        // Search input
+        // Search input (debounced)
         const searchInput = html.querySelector("input[name='name']");
         if (searchInput) {
             let timeout;
@@ -674,7 +678,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             el.addEventListener("click", (event) => this.#onToggleCollapsed(event));
         });
 
-        // Filter value changes — re-render results when any filter input changes
+        // Filter value changes
         const sidebarEl = html.querySelector(".sidebar");
         if (sidebarEl) {
             sidebarEl.addEventListener("change", (event) => {
@@ -694,49 +698,69 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         if (sourceBtn) {
             sourceBtn.addEventListener("click", () => new SourceConfig().render({ force: true }));
         }
+    }
 
-        // Results container: scroll listener + entry interaction
-        // (results are rendered async via #renderResults)
-        const resultsEl = html.querySelector(".browser-results");
-        if (resultsEl) {
-            // Scroll listener for lazy loading (once only, guarded by #listenersAttached)
-            resultsEl.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
+    /**
+     * Attach results-area listeners and kick off async fetch+render.
+     * Called on every results re-render (tab switch, filter change, search).
+     */
+    #attachResults() {
+        const resultsEl = this.element.querySelector(".browser-results");
+        if (!resultsEl) return;
 
-            // Start rendering results (async)
-            this.#renderResults(resultsEl);
+        // Remove old scroll listener by cloning the node (simple approach)
+        const newEl = resultsEl.cloneNode(true);
+        resultsEl.parentNode.replaceChild(newEl, resultsEl);
 
-            // Entry click/change listeners (selection mode only)
-            if (this.#displaySelection) {
-                resultsEl.addEventListener("click", (event) => {
+        // Scroll listener for lazy batch loading
+        newEl.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
+
+        // Entry click delegation (only in selection mode)
+        if (this.#displaySelection) {
+            newEl.addEventListener("click", (event) => {
+                const entryEl = event.target.closest("[data-entry-uuid]");
+                if (!entryEl) return;
+                if (event.target.closest("[data-action='openLink']")) return;
+                this.#onClickEntryDelegated(entryEl, event);
+            });
+
+            newEl.addEventListener("change", (event) => {
+                if (event.target.name === "selected") {
                     const entryEl = event.target.closest("[data-entry-uuid]");
-                    if (!entryEl) return;
-                    if (event.target.closest("[data-action='openLink']")) return;
-                    this.#onClickEntryDelegated(entryEl, event);
-                });
-
-                resultsEl.addEventListener("change", (event) => {
-                    if (event.target.name === "selected") {
-                        const entryEl = event.target.closest("[data-entry-uuid]");
-                        if (entryEl) this.#onChangeEntryDelegated(entryEl, event.target);
-                    }
-                });
-            }
+                    if (entryEl) this.#onChangeEntryDelegated(entryEl, event.target);
+                }
+            });
         }
+
+        // Entry click to open document
+        newEl.addEventListener("click", (event) => {
+            const openLink = event.target.closest("[data-action='openLink']");
+            if (openLink) {
+                const entryEl = openLink.closest("[data-entry-uuid]");
+                if (entryEl) {
+                    const uuid = entryEl.dataset.entryUuid;
+                    if (uuid) fromUuid(uuid).then(doc => doc?.sheet?.render(true));
+                }
+            }
+        });
+
+        // Kick off async fetch + render
+        this.#renderResults(newEl);
     }
 
     /* -------------------------------------------- */
     /*  Event Handlers                              */
     /* -------------------------------------------- */
 
-    /** Switch to a different tab. */
-    #onClickTab(event) {
-        const tab = event.currentTarget.dataset.tab;
-        if (tab && tab !== this.#activeTab) {
-            this.#activeTab = tab;
-            this.#searchName = "";
-            this.#activeFilters = [];
-            this.render({ parts: ["tabs", "search", "types", "filters", "results"] });
-        }
+    /**
+     * ApplicationV2 tab change hook. Fires when user clicks a tab button.
+     * Re-renders tab-dependent parts (search, types, filters, results).
+     */
+    changeTab(tab, group, options = {}) {
+        super.changeTab(tab, group, options);
+        this.#activeTab = tab;
+        this.#searchName = "";
+        this.render({ parts: ["tabs", "search", "types", "filters", "results"] });
     }
 
     /** Toggle between Basic and Advanced mode. */
