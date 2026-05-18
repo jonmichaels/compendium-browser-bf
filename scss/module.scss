@@ -6,99 +6,26 @@
 /* ---- Application Shell ---- */
 .compendium-browser {
   --icon-size: 32px;
-  --header-height: 30px;
   border: none;
-}
-
-/* ---- Vertical Tabs (inside layout — flex approach) ----
-   Instead of absolute positioning outside the window (which
-   requires CSS that breaks Foundry), we use display:flex on
-   the application to put tabs and window-content side by side.
-   No overflow/position overrides needed. Completely safe. */
-.compendium-browser.vertical-tabs {
-  display: flex;
-  flex-flow: row wrap;
-}
-
-.compendium-browser.vertical-tabs > .window-header {
-  flex: 1 0 100%;
-}
-
-.compendium-browser.vertical-tabs nav.tabs {
-  --tab-full-width: 110px;
-  flex: 0 0 var(--tab-full-width);
-  width: var(--tab-full-width);
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  padding-top: 28px;
-  background: var(--color-bg-option, #1a1a2e);
-  border-right: 1px solid var(--color-border-dark-primary);
 }
 
-.compendium-browser.vertical-tabs .window-content {
+.compendium-browser > .window-content {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
+  min-height: 0;
 }
 
-.compendium-browser.vertical-tabs nav.tabs:empty {
-  display: none;
-}
-
-/* Tab items — full-width text buttons with icons */
-.compendium-browser.vertical-tabs nav.tabs > .item {
-  --icon-size: 14px;
-  align-items: center;
-  justify-content: flex-start;
-  flex: 0 0 auto;
-  transition: all 250ms ease;
-  margin: 0;
-  border-radius: 0;
-  padding: 8px 8px 8px 12px;
-  color: var(--color-text-secondary);
-  height: unset;
-  gap: 8px;
-}
-
-.compendium-browser.vertical-tabs nav.tabs > .item:not([hidden]) {
-  display: flex;
-}
-
-.compendium-browser.vertical-tabs nav.tabs > .item i {
-  font-size: var(--font-size-14);
-  margin: 0;
-  flex: 0 0 16px;
-  text-align: center;
-}
-
-/* Active + hover — high contrast gold-on-dark */
-.compendium-browser.vertical-tabs nav.tabs > .item.active,
-.compendium-browser.vertical-tabs nav.tabs > .item:hover {
-  text-shadow: none;
-  background: var(--color-level-warning, #c9a43e);
-  color: var(--color-text-dark-primary, #111);
-}
-
-/* Tab text labels — always visible */
-.compendium-browser.vertical-tabs nav.tabs .tab-label {
-  font-size: var(--font-size-13);
-  white-space: nowrap;
-}
-
-/* ---- Window Content Grid (3 areas: header, sidebar, results) ---- */
+/* ---- Window Content Grid: tabs + sidebar + results ---- */
 .compendium-browser .window-content {
   display: grid;
   grid-template-areas:
-    "header header"
-    "sidebar results"
-    "sidebar footer";
-  grid-template-columns: 230px auto;
-  grid-template-rows: auto 1fr 2.75rem;
+    "tabs sidebar results"
+    "tabs sidebar footer";
+  grid-template-columns: 110px 230px 1fr;
+  grid-template-rows: 1fr auto;
   padding: 0;
   overflow: hidden;
-  column-gap: 0;
 }
 
 .compendium-browser .window-content:has(> .footer:empty) {
@@ -117,9 +44,72 @@
   grid-area: footer;
 }
 
-/* Header (mode toggle + configure sources, inside window-content) */
+.compendium-browser .window-content .tabs {
+  grid-area: tabs;
+}
+
+/* ---- Tab Rail (inside window-content, leftmost column) ---- */
+.compendium-browser .window-content .tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding-top: 8px;
+  background: var(--color-bg-option, #1a1a2e);
+  border-right: 1px solid var(--color-border-dark-primary);
+  overflow-y: auto;
+}
+
+.compendium-browser .window-content .tabs:empty {
+  display: none;
+}
+
+/* Tab items — full-width text buttons with icons */
+.compendium-browser .window-content .tabs > .item {
+  --icon-size: 14px;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+  transition: all 250ms ease;
+  margin: 0;
+  border-radius: 0;
+  padding: 8px 8px 8px 12px;
+  color: var(--color-text-secondary);
+  height: unset;
+  gap: 8px;
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.compendium-browser .window-content .tabs > .item:not([hidden]) {
+  display: flex;
+}
+
+.compendium-browser .window-content .tabs > .item i {
+  font-size: var(--font-size-14);
+  margin: 0;
+  flex: 0 0 16px;
+  text-align: center;
+}
+
+/* Active + hover — high contrast gold-on-dark */
+.compendium-browser .window-content .tabs > .item.active,
+.compendium-browser .window-content .tabs > .item:hover {
+  text-shadow: none;
+  background: var(--color-level-warning, #c9a43e);
+  color: var(--color-text-dark-primary, #111);
+}
+
+/* Tab text labels — always visible */
+.compendium-browser .window-content .tabs .tab-label {
+  font-size: var(--font-size-13);
+  white-space: nowrap;
+}
+
+/* Header (Advanced toggle, inside window-content) */
 .compendium-browser .window-content > .header {
-  grid-area: header;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -404,7 +394,7 @@
 }
 
 /* ---- Minimized State ---- */
-.compendium-browser.minimized.vertical-tabs nav.tabs {
+.compendium-browser.minimized .window-content .tabs {
   display: none;
 }
 
