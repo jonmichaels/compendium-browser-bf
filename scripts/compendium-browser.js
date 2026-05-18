@@ -189,8 +189,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 // Name filter (case-insensitive prefix match)
                 if (name && !entry.name.toLowerCase().startsWith(name.toLowerCase())) continue;
 
-                // Source filter (3-state: 0=off, 1=include-only, -1=exclude)
-                const sourceFilter = filters.find(f => f.key === "source" && f.type === "set");
+                // Compendium pack source filter (3-state: 0=off, 1=include-only, -1=exclude)
+                const sourceFilter = filters.find(f => f.key === "pack" && f.type === "set");
                 if (sourceFilter?.value) {
                     const values = sourceFilter.value;
                     const matchKey = Object.keys(values).find(k =>
@@ -463,7 +463,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         }
 
         // Read source filter values from DOM (not in cachedFilterDefs)
-        const sourceFilterEl = html.querySelector('[data-filter-id="source"]');
+        const sourceFilterEl = html.querySelector('[data-filter-id="pack"]');
         if (sourceFilterEl) {
             const sourceChecked = {};
             sourceFilterEl.querySelectorAll(".filter-state").forEach(el => {
@@ -473,7 +473,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             });
             if (Object.keys(sourceChecked).length > 0) {
                 filters.push({
-                    key: "source",
+                    key: "pack",
                     type: "set",
                     value: sourceChecked,
                 });
