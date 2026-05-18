@@ -212,6 +212,14 @@
 }
 
 /* ---- Results Area ---- */
+.compendium-browser .results .item-row .item-image {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  object-fit: cover;
+  border-radius: 4px;
+  flex: 0 0 var(--icon-size);
+}
+
 .compendium-browser .results {
   --results-padding: 6px;
   padding: var(--results-padding) 4px 12px 4px;

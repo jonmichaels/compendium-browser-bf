@@ -454,6 +454,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         context.loading = true;
         context.displaySelection = this.#displaySelection;
         context.partId = "results";
+        context.tabLabel = def.label;
         return context;
     }
 
@@ -518,7 +519,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             img: entry.img,
             uuid: entry.uuid,
             source,
-            subtitle: game.i18n.localize(`TYPES.Item.${entry.type}`) || (entry.type.charAt(0).toUpperCase() + entry.type.slice(1)),
+            subtitle: game.i18n.localize(`TYPES.Item.${entry.type}`) !== `TYPES.Item.${entry.type}` ? game.i18n.format(`TYPES.Item.${entry.type}`) : (entry.type.charAt(0).toUpperCase() + entry.type.slice(1)),
             selected: this.#selected.has(entry.uuid),
         };
     }
