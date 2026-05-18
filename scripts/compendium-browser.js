@@ -831,6 +831,6 @@ export function initCompendiumBrowser() {
         button.type = "button";
         button.innerHTML = '<i class="fas fa-search"></i> Compendium Browser';
         button.addEventListener("click", () => new CompendiumBrowser().render({ force: true }));
-        html[0]?.querySelector(".header-actions")?.append(button);
+        html.querySelector(".header-actions")?.append(button);
     });
 }
