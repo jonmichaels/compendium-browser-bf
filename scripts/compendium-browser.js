@@ -162,8 +162,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static async fetch(documentClass, { types = new Set(), filters = [], name = "", sort = true } = {}) {
         const collatedSources = this.collateSources();
 
-        // Collect all needed index field paths
-        const fieldSet = new Set(["name", "img", "type", "system"]);
+        // Collect all needed index field paths (never request "system" as a broad key —
+        // Foundry's getIndex → setProperty chain crashes on primitives with 'type' in 1)
+        const fieldSet = new Set(["name", "img", "type", "system.source"]);
         for (const f of filters) {
             if (f._keyPath) fieldSet.add(f._keyPath);
         }
@@ -569,9 +570,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             }
         }
 
-        // 2. Fallback: document's system.source
+        // 2. Fallback: document's system.source (handle both nested and flat getIndex results)
         if (!source) {
-            const src = entry.system?.source;
+            const src = entry.system?.source ?? entry["system.source"];
             if (typeof src === "string") source = src;
             else if (Array.isArray(src)) source = src.join(", ");
             else if (src?.value) source = src.value;
