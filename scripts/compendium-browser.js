@@ -105,6 +105,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /** @type {string|null} — UUID of the last clicked entry for Shift-range */
     #lastClickedEntry = null;
 
+    /** @type {boolean} — whether initial listeners have been attached */
+    #listenersAttached = false;
+
+    /** @type {Array<object>|null} — cached filter definitions for DOM value reading */
+    #cachedFilterDefs = null;
+
     /* -------------------------------------------- */
     /*  Static Methods                              */
     /* -------------------------------------------- */
@@ -360,7 +366,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Build type entries for the template
         context.types = types.map((typeKey, i) => ({
             "@key": typeKey,
-            label: `TYPES.${typeKey}`,
+            label: typeKey.charAt(0).toUpperCase() + typeKey.slice(1),
             chosen: i === 0, // First type selected by default
         }));
         context.showTypes = types.length > 1;
@@ -376,8 +382,53 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         const def = this.#activeTabDef;
         const types = def.types ? new Set(def.types) : null;
         context.additional = getFilterDefinitions(def.documentClass, types);
+        this.#cachedFilterDefs = context.additional; // cache for DOM value reading
         context.partId = "filters";
         return context;
+    }
+
+    /**
+     * Read current filter values from the DOM sidebar.
+     * @returns {Array<object>} — filter definitions with values populated from DOM state
+     */
+    #readFilterValues() {
+        const filters = this.#cachedFilterDefs || [];
+        const html = this.element;
+        if (!html) return filters;
+
+        for (const filter of filters) {
+            if (filter.type === "boolean") {
+                const el = html.querySelector(`input[name="additional.${filter.key}"]`);
+                filter.value = el?.checked || false;
+            } else if (filter.type === "range") {
+                const minEl = html.querySelector(`input[name="additional.${filter.key}.min"]`);
+                const maxEl = html.querySelector(`input[name="additional.${filter.key}.max"]`);
+                filter.value = {
+                    min: minEl?.value || undefined,
+                    max: maxEl?.value || undefined,
+                };
+                // Parse numbers for numeric range filters
+                if (filter._transform === "number") {
+                    if (filter.value.min) filter.value.min = Number(filter.value.min);
+                    if (filter.value.max) filter.value.max = Number(filter.value.max);
+                }
+            } else if (filter.type === "set") {
+                const checked = {};
+                const filterEl = html.querySelector(`[data-filter-id="${filter.key}"]`);
+                if (filterEl) {
+                    filterEl.querySelectorAll("input[type='checkbox']:checked").forEach(el => {
+                        // Extract choice key from name="additional.school.abjuration"
+                        const parts = el.name.split(".");
+                        const choiceKey = parts[parts.length - 1];
+                        if (choiceKey && choiceKey !== "_blank") {
+                            checked[choiceKey] = true;
+                        }
+                    });
+                }
+                filter.value = Object.keys(checked).length > 0 ? checked : null;
+            }
+        }
+        return filters;
     }
 
     /**
@@ -385,7 +436,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      */
     async _prepareResultsContext(context) {
         const def = this.#activeTabDef;
-        const filters = context.additional || getFilterDefinitions(def.documentClass, def.types ? new Set(def.types) : null);
+
+        // Read current filter values from the DOM sidebar
+        const filters = this.#readFilterValues();
 
         // Kick off the async fetch — results rendered later via #renderResults
         this.#allResults = [];
@@ -465,7 +518,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             img: entry.img,
             uuid: entry.uuid,
             source,
-            subtitle: `BF.${entry.type[0].toUpperCase()}${entry.type.slice(1)}`,
+            subtitle: entry.type.charAt(0).toUpperCase() + entry.type.slice(1),
             selected: this.#selected.has(entry.uuid),
         };
     }
@@ -521,7 +574,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Validate min/max selection
         if (this.#displaySelection) {
-            if (this.#minSelection && this.#selected.size < this.#minSelection) {
+            if (this.#minSelection != null && this.#selected.size < this.#minSelection) {
                 context.invalid = true;
                 context.invalidTooltip = game.i18n.format(
                     "compendium-browser-bf.Footer.Minimum",
@@ -564,6 +617,10 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Attach DOM event listeners for tab switching, mode toggle, search, and filters.
      */
     #activateListeners(context, options) {
+        // Only attach static listeners once — partial re-renders would pile up duplicates
+        if (this.#listenersAttached) return;
+        this.#listenersAttached = true;
+
         const html = this.element;
 
         // Tab switching
@@ -603,6 +660,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             el.addEventListener("click", (event) => this.#onToggleCollapsed(event));
         });
 
+        // Filter value changes — re-render results when any filter input changes
+        const sidebarEl = html.querySelector(".sidebar");
+        if (sidebarEl) {
+            sidebarEl.addEventListener("change", (event) => {
+                if (event.target.closest("[data-application-part='filters']")) {
+                    this.#onFilterChange(event);
+                }
+            });
+        }
+
         // Close button
         html.querySelectorAll("[data-action='close']").forEach(el => {
             el.addEventListener("click", () => this.close());
@@ -614,21 +681,26 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             sourceBtn.addEventListener("click", () => new SourceConfig().render({ force: true }));
         }
 
-        // Entry clicks (selection mode)
+        // Entry clicks — use event delegation on results container
+        // (entries are rendered async, so per-item listeners in _onRender won't work)
         if (this.#displaySelection) {
-            // Click on entry row to toggle
-            html.querySelectorAll(".item-list .item").forEach(el => {
-                el.addEventListener("click", (event) => {
+            const resultsEl = html.querySelector(".browser-results");
+            if (resultsEl) {
+                resultsEl.addEventListener("click", (event) => {
+                    const entryEl = event.target.closest("[data-entry-uuid]");
+                    if (!entryEl) return;
                     // Ignore if clicking the open-link action
                     if (event.target.closest("[data-action='openLink']")) return;
-                    this.#onClickEntry(event);
+                    this.#onClickEntryDelegated(entryEl, event);
                 });
-            });
 
-            // Checkbox changes
-            html.querySelectorAll(".item-list input[type='checkbox'][name='selected']").forEach(el => {
-                el.addEventListener("change", (event) => this.#onChangeEntry(event));
-            });
+                resultsEl.addEventListener("change", (event) => {
+                    if (event.target.name === "selected") {
+                        const entryEl = event.target.closest("[data-entry-uuid]");
+                        if (entryEl) this.#onChangeEntryDelegated(entryEl, event.target);
+                    }
+                });
+            }
         }
     }
 
@@ -686,12 +758,14 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         }
     }
 
-    /** Click an entry row to toggle selection with Shift-range support. */
-    #onClickEntry(event) {
-        if (!this.#displaySelection) return;
+    /** Re-render results when a filter value changes. */
+    #onFilterChange(event) {
+        this.render({ parts: ["results"] });
+    }
 
-        const entryEl = event.currentTarget.closest("[data-entry-uuid]");
-        if (!entryEl) return;
+    /** Click an entry row to toggle selection with Shift-range support. */
+    #onClickEntryDelegated(entryEl, event) {
+        if (!this.#displaySelection) return;
 
         const uuid = entryEl.dataset.entryUuid;
         const isShift = event.shiftKey;
@@ -726,12 +800,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /** Checkbox change on an entry row. */
-    #onChangeEntry(event) {
+    #onChangeEntryDelegated(entryEl, checkbox) {
         if (!this.#displaySelection) return;
-
-        const checkbox = event.currentTarget;
-        const entryEl = checkbox.closest("[data-entry-uuid]");
-        if (!entryEl) return;
 
         const uuid = entryEl.dataset.entryUuid;
         if (checkbox.checked) {
