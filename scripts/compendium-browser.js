@@ -96,6 +96,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /** @type {number} — how many results are currently displayed (batched) */
     #loadedCount = 0;
 
+    /** @type {number|null} — minimum selection count */
+    #minSelection = null;
+
+    /** @type {number|null} — maximum selection count */
+    #maxSelection = null;
+
+    /** @type {string|null} — UUID of the last clicked entry for Shift-range */
+    #lastClickedEntry = null;
+
     /* -------------------------------------------- */
     /*  Static Methods                              */
     /* -------------------------------------------- */
@@ -170,6 +179,42 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         return results;
     }
 
+    /**
+     * Open the browser in selection mode, returning a Promise that resolves
+     * with the selected UUIDs when the user confirms.
+     *
+     * @param {object} [options]
+     * @param {object} [options.filters]   — pre-configured filter values
+     * @param {object} [options.selection] — { min, max } selection constraints
+     * @param {object} [renderOptions]     — Foundry render options
+     * @returns {Promise<string[]>}         — resolves with selected UUIDs
+     */
+    static async select(options = {}, renderOptions = {}) {
+        return new Promise((resolve) => {
+            const browser = new this({
+                filters: options.filters || {},
+                selection: options.selection || {},
+            });
+            browser.#resolveSelection = resolve;
+            browser.render({ force: true }, renderOptions);
+        });
+    }
+
+    /**
+     * Open the browser in single-select mode. Convenience wrapper around select().
+     *
+     * @param {object} [options]
+     * @param {object} [options.filters] — pre-configured filter values
+     * @param {object} [renderOptions]   — Foundry render options
+     * @returns {Promise<string[]>}       — resolves with single-selected UUID
+     */
+    static async selectOne(options = {}, renderOptions = {}) {
+        return this.select({
+            ...options,
+            selection: { min: 1, max: 1 },
+        }, renderOptions);
+    }
+
     /* -------------------------------------------- */
     /*  Form Handler                                */
     /* -------------------------------------------- */
@@ -188,6 +233,18 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /* -------------------------------------------- */
     /*  Properties                                  */
     /* -------------------------------------------- */
+
+    /**
+     * Process constructor options for selection mode.
+     * @param {object} options
+     */
+    _configure(options) {
+        super._configure(options);
+        if (options.selection) {
+            this.#minSelection = options.selection.min ?? null;
+            this.#maxSelection = options.selection.max ?? null;
+        }
+    }
 
     /**
      * The active tab definition object from TABS or ADVANCED_TABS.
@@ -461,6 +518,25 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         context.displaySelection = this.#displaySelection;
         context.selectionCount = this.#selected.size;
         context.invalid = false;
+
+        // Validate min/max selection
+        if (this.#displaySelection) {
+            if (this.#minSelection && this.#selected.size < this.#minSelection) {
+                context.invalid = true;
+                context.invalidTooltip = game.i18n.format(
+                    "compendium-browser-bf.Footer.Minimum",
+                    { min: this.#minSelection }
+                );
+            }
+            if (this.#maxSelection && this.#selected.size > this.#maxSelection) {
+                context.invalid = true;
+                context.invalidTooltip = game.i18n.format(
+                    "compendium-browser-bf.Footer.Maximum",
+                    { max: this.#maxSelection }
+                );
+            }
+        }
+
         context.partId = "footer";
         return context;
     }
@@ -537,6 +613,23 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         if (sourceBtn) {
             sourceBtn.addEventListener("click", () => new SourceConfig().render({ force: true }));
         }
+
+        // Entry clicks (selection mode)
+        if (this.#displaySelection) {
+            // Click on entry row to toggle
+            html.querySelectorAll(".item-list .item").forEach(el => {
+                el.addEventListener("click", (event) => {
+                    // Ignore if clicking the open-link action
+                    if (event.target.closest("[data-action='openLink']")) return;
+                    this.#onClickEntry(event);
+                });
+            });
+
+            // Checkbox changes
+            html.querySelectorAll(".item-list input[type='checkbox'][name='selected']").forEach(el => {
+                el.addEventListener("change", (event) => this.#onChangeEntry(event));
+            });
+        }
     }
 
     /* -------------------------------------------- */
@@ -591,6 +684,64 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         if (filterEl) {
             filterEl.classList.toggle("collapsed");
         }
+    }
+
+    /** Click an entry row to toggle selection with Shift-range support. */
+    #onClickEntry(event) {
+        if (!this.#displaySelection) return;
+
+        const entryEl = event.currentTarget.closest("[data-entry-uuid]");
+        if (!entryEl) return;
+
+        const uuid = entryEl.dataset.entryUuid;
+        const isShift = event.shiftKey;
+
+        if (isShift && this.#lastClickedEntry) {
+            // Shift-range select: select all entries between last clicked and this one
+            const allUUIDs = this.#allResults.map(e => e.uuid);
+            const lastIdx = allUUIDs.indexOf(this.#lastClickedEntry);
+            const thisIdx = allUUIDs.indexOf(uuid);
+
+            if (lastIdx >= 0 && thisIdx >= 0) {
+                const start = Math.min(lastIdx, thisIdx);
+                const end = Math.max(lastIdx, thisIdx);
+                for (let i = start; i <= end; i++) {
+                    this.#selected.add(allUUIDs[i]);
+                }
+            }
+        } else {
+            // Toggle single entry
+            if (this.#selected.has(uuid)) {
+                this.#selected.delete(uuid);
+            } else {
+                // Respect max selection
+                if (!this.#maxSelection || this.#selected.size < this.#maxSelection) {
+                    this.#selected.add(uuid);
+                }
+            }
+        }
+
+        this.#lastClickedEntry = uuid;
+        this.render({ parts: ["results", "footer"] });
+    }
+
+    /** Checkbox change on an entry row. */
+    #onChangeEntry(event) {
+        if (!this.#displaySelection) return;
+
+        const checkbox = event.currentTarget;
+        const entryEl = checkbox.closest("[data-entry-uuid]");
+        if (!entryEl) return;
+
+        const uuid = entryEl.dataset.entryUuid;
+        if (checkbox.checked) {
+            this.#selected.add(uuid);
+        } else {
+            this.#selected.delete(uuid);
+        }
+
+        this.#lastClickedEntry = uuid;
+        this.render({ parts: ["footer"] });
     }
 }
 
