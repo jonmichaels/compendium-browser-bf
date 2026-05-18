@@ -87,7 +87,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities" },
+            config: { con: "rarities", blank: "No Rarity" },
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -110,7 +110,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities" },
+            config: { con: "rarities", blank: "No Rarity" },
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -133,7 +133,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities" },
+            config: { con: "rarities", blank: "No Rarity" },
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -156,7 +156,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities" },
+            config: { con: "rarities", blank: "No Rarity" },
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -173,7 +173,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities" },
+            config: { con: "rarities", blank: "No Rarity" },
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -207,7 +207,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities" },
+            config: { con: "rarities", blank: "No Rarity" },
         }],
         ["attunement", {
             label: "compendium-browser-bf.Filters.Attunement",
@@ -404,16 +404,24 @@ export function applyFilter(entry, filter) {
 
         case "set": {
             if (!filter.value) return true;  // nothing selected, pass all
+            // Handle _blank (e.g. "No Rarity") - matches empty/falsy values
+            const hasBlank = filter.value._blank;
             // Handle SetField values (arrays) vs scalar values
             if (Array.isArray(rawValue)) {
+                if (rawValue.length === 0 && hasBlank) return true;
                 // At least one value must match (for SetField source/tags)
                 for (const val of Object.keys(filter.value)) {
+                    if (val === "_blank") continue;
                     if (filter.value[val] && rawValue.includes(val)) return true;
                 }
                 return false;
             }
+            // Empty string check
+            if (!rawValue || rawValue === "") return !!hasBlank;
             // Scalar check
-            return !!filter.value[rawValue];
+            const scalarMatch = !!filter.value[rawValue];
+            if (scalarMatch) return true;
+            return false;
         }
 
         default:

@@ -420,8 +420,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                         // Extract choice key from name="additional.school.abjuration"
                         const parts = el.name.split(".");
                         const choiceKey = parts[parts.length - 1];
-                        if (choiceKey && choiceKey !== "_blank") {
-                            checked[choiceKey] = true;
+                        if (choiceKey) {
+                            checked[choiceKey] = true;  // includes _blank
                         }
                     });
                 }
@@ -518,7 +518,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             img: entry.img,
             uuid: entry.uuid,
             source,
-            subtitle: entry.type.charAt(0).toUpperCase() + entry.type.slice(1),
+            subtitle: game.i18n.localize(`TYPES.Item.${entry.type}`) || (entry.type.charAt(0).toUpperCase() + entry.type.slice(1)),
             selected: this.#selected.has(entry.uuid),
         };
     }
@@ -600,17 +600,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
     _onRender(context, options) {
         super._onRender(context, options);
-        // Attach event listeners after render
+        // Attach event listeners (once-only, guarded internally)
         this.#activateListeners(context, options);
-
-        // Kick off results fetch and render when ready
-        const resultsContainer = this.element.querySelector(".browser-results .items-section");
-        if (resultsContainer && this.#resultsPromise) {
-            // Add scroll listener for lazy loading
-            resultsContainer.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
-            // Start rendering results
-            this.#renderResults(resultsContainer);
-        }
     }
 
     /**
@@ -681,15 +672,21 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             sourceBtn.addEventListener("click", () => new SourceConfig().render({ force: true }));
         }
 
-        // Entry clicks — use event delegation on results container
-        // (entries are rendered async, so per-item listeners in _onRender won't work)
-        if (this.#displaySelection) {
-            const resultsEl = html.querySelector(".browser-results");
-            if (resultsEl) {
+        // Results container: scroll listener + entry interaction
+        // (results are rendered async via #renderResults)
+        const resultsEl = html.querySelector(".browser-results");
+        if (resultsEl) {
+            // Scroll listener for lazy loading (once only, guarded by #listenersAttached)
+            resultsEl.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
+
+            // Start rendering results (async)
+            this.#renderResults(resultsEl);
+
+            // Entry click/change listeners (selection mode only)
+            if (this.#displaySelection) {
                 resultsEl.addEventListener("click", (event) => {
                     const entryEl = event.target.closest("[data-entry-uuid]");
                     if (!entryEl) return;
-                    // Ignore if clicking the open-link action
                     if (event.target.closest("[data-action='openLink']")) return;
                     this.#onClickEntryDelegated(entryEl, event);
                 });
