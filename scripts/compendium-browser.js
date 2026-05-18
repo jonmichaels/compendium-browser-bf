@@ -29,16 +29,22 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             classes: ["header"],
             template: "modules/compendium-browser-bf/templates/browser-header.hbs",
         },
-        sidebar: {
-            id: "sidebar",
-            classes: ["sidebar", "flexcol"],
-            template: "modules/compendium-browser-bf/templates/browser-sidebar.hbs",
-            templates: [
-                "modules/compendium-browser-bf/templates/browser-sidebar-search.hbs",
-                "modules/compendium-browser-bf/templates/browser-sidebar-types.hbs",
-                "modules/compendium-browser-bf/templates/browser-sidebar-filters.hbs",
-                "modules/compendium-browser-bf/templates/browser-sidebar-filter-set.hbs",
-            ],
+        search: {
+            id: "sidebar-search",
+            classes: ["filter-element"],
+            container: { id: "sidebar", classes: ["sidebar", "flexcol"] },
+            template: "modules/compendium-browser-bf/templates/browser-sidebar-search.hbs",
+        },
+        types: {
+            id: "sidebar-types",
+            container: { id: "sidebar", classes: ["sidebar", "flexcol"] },
+            template: "modules/compendium-browser-bf/templates/browser-sidebar-types.hbs",
+        },
+        filters: {
+            id: "sidebar-filters",
+            container: { id: "sidebar", classes: ["sidebar", "flexcol"] },
+            template: "modules/compendium-browser-bf/templates/browser-sidebar-filters.hbs",
+            templates: ["modules/compendium-browser-bf/templates/browser-sidebar-filter-set.hbs"],
         },
         results: {
             id: "results",
@@ -327,7 +333,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         switch (partId) {
             case "header":  return this._prepareHeaderContext(context);
             case "tabs":    return this._prepareTabsContext(context);
-            case "sidebar": return this._prepareSidebarContext(context);
+            case "search":  return this._prepareSearchContext(context);
+            case "types":   return this._prepareTypesContext(context);
+            case "filters": return this._prepareFiltersContext(context);
             case "results": return this._prepareResultsContext(context);
             case "footer":  return this._prepareFooterContext(context);
         }
@@ -365,30 +373,42 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Sidebar context: search, types, and filters combined.
+     * Search context: current search name.
      */
-    async _prepareSidebarContext(context) {
+    async _prepareSearchContext(context) {
+        context.name = this.#searchName;
+        context.partId = "search";
+        return context;
+    }
+
+    /**
+     * Types context: type checkboxes for the active tab.
+     */
+    async _prepareTypesContext(context) {
         const def = this.#activeTabDef;
         const types = def.types ?? [];
-        const typeSet = def.types ? new Set(def.types) : null;
 
-        // Search
-        context.name = this.#searchName;
-        context.partId = "sidebar";
-
-        // Types
+        // Build type entries for the template
         context.types = types.map((typeKey, i) => ({
             "@key": typeKey,
             label: typeKey.charAt(0).toUpperCase() + typeKey.slice(1),
-            chosen: i === 0,
+            chosen: i === 0, // First type selected by default
         }));
         context.showTypes = types.length > 1;
         context.isLocked = this.#filtersLocked;
+        context.partId = "types";
+        return context;
+    }
 
-        // Filters
-        context.additional = getFilterDefinitions(def.documentClass, typeSet);
-        this.#cachedFilterDefs = context.additional;
-
+    /**
+     * Filters context: active filter definitions and values for the current tab.
+     */
+    async _prepareFiltersContext(context) {
+        const def = this.#activeTabDef;
+        const types = def.types ? new Set(def.types) : null;
+        context.additional = getFilterDefinitions(def.documentClass, types);
+        this.#cachedFilterDefs = context.additional; // cache for DOM value reading
+        context.partId = "filters";
         return context;
     }
 
@@ -692,7 +712,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
             // Re-render on filter change
             sidebarEl.addEventListener("change", (event) => {
-                if (event.target.closest("[data-filter-id], .filter, .filter-choice")) {
+                if (event.target.closest("[data-application-part='filters']")) {
                     this.#onFilterChange(event);
                 }
             });
@@ -764,7 +784,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         super.changeTab(tab, group, options);
         this.#activeTab = tab;
         this.#searchName = "";
-        this.render({ parts: ["tabs", "sidebar", "results"] });
+        this.render({ parts: ["tabs", "search", "types", "filters", "results"] });
     }
 
     /**
@@ -780,7 +800,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             ? [...CompendiumBrowser.TABS, ...CompendiumBrowser.ADVANCED_TABS]
             : CompendiumBrowser.TABS)[0].tab;
         this.#searchName = "";
-        this.render({ parts: ["header", "tabs", "sidebar", "results"] });
+        this.render({ parts: ["header", "tabs", "search", "types", "filters", "results"] });
     }
 
     /**
@@ -800,7 +820,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /** Clear search and re-render. */
     #onClearSearch() {
         this.#searchName = "";
-        this.render({ parts: ["sidebar", "results"] });
+        this.render({ parts: ["search", "results"] });
     }
 
     /** Toggle type checkboxes. */
