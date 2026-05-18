@@ -883,6 +883,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
  * Register module settings and hooks.
  */
 export function initCompendiumBrowser() {
+    /** @type {CompendiumBrowser|null} */
+    let currentBrowser = null;
+
     // Register source configuration setting
     game.settings.register("compendium-browser-bf", "packSourceConfiguration", {
         scope: "world",
@@ -897,7 +900,14 @@ export function initCompendiumBrowser() {
         button.className = "compendium-browser-btn";
         button.type = "button";
         button.innerHTML = '<i class="fas fa-search"></i> Compendium Browser';
-        button.addEventListener("click", () => new CompendiumBrowser().render({ force: true }));
+        button.addEventListener("click", () => {
+            if (currentBrowser?.rendered) {
+                currentBrowser.close();
+            } else {
+                currentBrowser = new CompendiumBrowser();
+                currentBrowser.render({ force: true });
+            }
+        });
         html.querySelector(".header-actions")?.append(button);
     });
 }
