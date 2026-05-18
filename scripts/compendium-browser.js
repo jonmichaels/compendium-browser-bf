@@ -72,6 +72,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static SEARCH_DELAY = 100;
 
     static PACK_SOURCE_ABBREV = {
+        "black-flag": "BF SRD",
         "kp-tov-players-guide": "ToV PG",
         "kp-tov-game-masters-guide": "ToV GMG",
         "kp-tov-monster-vault": "ToV MV",
@@ -680,11 +681,11 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                         data-tooltip aria-label="${game.i18n.localize("compendium-browser-bf.ConfigureSources")}"></button>
             `);
         }
-        // Inject the Advanced toggle before the close button (right side of header)
+        // Inject the Advanced toggle on the LEFT side of the window header (before the title)
         if (!this.#filtersLocked) {
-            const closeBtn = frame.querySelector('[data-action="close"]');
-            if (closeBtn) {
-                closeBtn.insertAdjacentHTML('beforebegin', `
+            const title = frame.querySelector('.window-title');
+            if (title) {
+                title.insertAdjacentHTML('beforebegin', `
                     <label class="switch mode-toggle" style="display:inline-flex;align-items:center;gap:6px">
                         <input type="checkbox" data-action="toggleMode" ${this.#mode === CompendiumBrowser.MODES.ADVANCED ? 'checked' : ''}>
                         <span class="slider"></span>
@@ -747,11 +748,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 return;
             }
             // 3-state filter clicks (off → include → exclude → off)
-            const stateEl = event.target.closest(".filter-state");
-            if (stateEl) {
-                event.preventDefault();
-                this.#onFilterStateClick(stateEl);
-                return;
+            // Use .filter-choice to catch clicks on label text too — .filter-state may be a sibling, not an ancestor
+            const filterChoice = event.target.closest(".filter-choice");
+            if (filterChoice) {
+                const stateEl = filterChoice.querySelector(".filter-state");
+                if (stateEl) {
+                    event.preventDefault();
+                    this.#onFilterStateClick(stateEl);
+                    return;
+                }
             }
         });
 

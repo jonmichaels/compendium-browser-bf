@@ -71,11 +71,11 @@
   --icon-size: 14px;
   align-items: center;
   justify-content: center;
-  flex: 0 0 28px;
+  flex: 0 0 24px;
   transition: all 250ms ease;
   margin: 0;
   border-radius: 4px;
-  padding: 2px;
+  padding: 1px;
   color: var(--color-text-secondary);
   text-decoration: none;
   border: none;
@@ -403,7 +403,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: rgba(0, 100, 200, 0.15);
+  background: var(--color-level-error-bg, #3a1a1a); /* opaque dark red, not transparent */
   padding-top: 6px;
   padding-bottom: 4px;
 }
@@ -427,9 +427,14 @@
   cursor: pointer;
 }
 
-/* Alternating entry row backgrounds */
+/* Entry rows — subtle but visible background on all rows */
+.compendium-browser .results ol li .item-row {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Alternating entry row backgrounds — slightly stronger zebra */
 .compendium-browser .results ol li:nth-child(even) .item-row {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .compendium-browser .results .item-row .item-name.rollable:hover .title {
