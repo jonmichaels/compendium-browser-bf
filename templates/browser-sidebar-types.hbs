@@ -1,0 +1,11 @@
+<div class="flexcol" {{#unless showTypes}}hidden{{/unless}}>
+    {{#each types}}
+    <div class="type-entry">
+        <label>
+            <input type="checkbox" value="{{ @key }}" data-action="setType"
+                   {{ checked chosen }} {{ disabled @root.isLocked }}>
+            <span>{{ localize label }}</span>
+        </label>
+    </div>
+    {{/each}}
+</div>

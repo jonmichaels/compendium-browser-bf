@@ -1,0 +1,31 @@
+<div class="flexcol">
+    {{#each additional}}
+    {{#if (eq type "boolean")}}
+    <div class="filter filter-boolean" data-filter-id="{{ key }}">
+        <span>
+            <input type="checkbox" name="additional.{{ key }}" value="1"
+                   id="{{ @root.partId }}-additional-{{ key }}"
+                   {{ checked value }} {{ disabled locked }}>
+            <label for="{{ @root.partId }}-additional-{{ key }}">{{ localize label }}</label>
+        </span>
+    </div>
+    {{else if (eq type "range")}}
+    <div class="filter filter-range form-group label-top" data-filter-id="{{ key }}">
+        <label>{{ localize label }}</label>
+        <div class="form-fields">
+            <input type="number" name="additional.{{ key }}.min" value="{{ value.min }}"
+                   min="{{ config.min }}" max="{{ config.max }}" step="any"
+                   placeholder="{{ config.min }}" {{ disabled locked.min }}>
+            <span class="sep">&ndash;</span>
+            <input type="number" name="additional.{{ key }}.max" value="{{ value.max }}"
+                   min="{{ config.min }}" max="{{ config.max }}" step="any"
+                   placeholder="{{ config.max }}" {{ disabled locked.max }}>
+        </div>
+    </div>
+    {{else if (eq type "set")}}
+    {{> "modules/compendium-browser-bf/templates/browser-sidebar-filter-set.hbs" }}
+    {{else}}
+    <div class="filter" data-filter-id="{{ key }}">{{ label }}</div>
+    {{/if}}
+    {{/each}}
+</div>

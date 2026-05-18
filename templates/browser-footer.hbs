@@ -1,0 +1,10 @@
+<div class="flexrow">
+    {{~#if displaySelection}}
+    <div class="count {{#if invalid}}invalid {{/if}}">
+        {{{ localize "compendium-browser-bf.Footer.Selected" count=selectionCount }}}
+    </div>
+    <button type="submit"{{#if invalid}} disabled data-tooltip{{/if}}>
+        Confirm
+    </button>
+    {{/if~}}
+</div>
