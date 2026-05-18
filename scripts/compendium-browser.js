@@ -1,5 +1,5 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
-import { getFilterDefinitions } from "./compendium-browser-filters.js";
+import { getFilterDefinitions, applyAllFilters } from "./compendium-browser-filters.js";
 
 export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -88,6 +88,86 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
     /** @type {Function|undefined} */
     #resolveSelection;
+
+    /** @type {Array<object>} — all fetched results, unfiltered by batching */
+    #allResults = [];
+
+    /** @type {number} — how many results are currently displayed (batched) */
+    #loadedCount = 0;
+
+    /* -------------------------------------------- */
+    /*  Static Methods                              */
+    /* -------------------------------------------- */
+
+    /**
+     * Resolve which compendium packs are enabled for browsing.
+     * Default: all packs enabled unless explicitly disabled in settings.
+     * @returns {object<string, boolean>} — pack ID → enabled
+     */
+    static collateSources() {
+        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
+        const sources = {};
+        for (const pack of game.packs) {
+            sources[pack.metadata.id] = config[pack.metadata.id] !== false;
+        }
+        return sources;
+    }
+
+    /**
+     * Fetch and filter compendium index entries.
+     *
+     * @param {string} documentClass — "Item" or "Actor"
+     * @param {object} [options]
+     * @param {Set<string>} [options.types]   — restrict to these document types
+     * @param {Array} [options.filters]        — active filter definitions
+     * @param {string} [options.name]          — name search string
+     * @param {boolean} [options.sort]         — sort results by name? (default: true)
+     * @returns {Promise<Array<object>>}        — filtered index entries
+     */
+    static async fetch(documentClass, { types = new Set(), filters = [], name = "", sort = true } = {}) {
+        const collatedSources = this.collateSources();
+
+        // Collect all needed index field paths
+        const fieldSet = new Set(["name", "img", "type"]);
+        for (const f of filters) {
+            if (f._keyPath) fieldSet.add(f._keyPath);
+        }
+
+        // Get matching compendium packs
+        const packs = game.packs.filter(p => {
+            if (p.metadata.type !== documentClass) return false;
+            const packTypes = p.metadata.flags?.["black-flag"]?.types;
+            if (packTypes && types.size > 0 && !packTypes.some(t => types.has(t))) return false;
+            return collatedSources[p.metadata.id] !== false;
+        });
+
+        // Fetch indexes from all matching packs
+        const results = [];
+        for (const pack of packs) {
+            const entries = await pack.getIndex({ fields: fieldSet });
+
+            for (const entry of entries) {
+                // Type filter
+                if (types.size > 0 && !types.has(entry.type)) continue;
+
+                // Name filter (case-insensitive substring)
+                if (name && !entry.name.toLowerCase().includes(name.toLowerCase())) continue;
+
+                // Custom filters
+                if (filters.length > 0 && !applyAllFilters(entry, filters)) continue;
+
+                results.push({
+                    ...entry,
+                    pack: pack.metadata.id,
+                    uuid: `Compendium.${pack.metadata.id}.${entry._id}`,
+                });
+            }
+        }
+
+        // Sort by name
+        if (sort) results.sort((a, b) => a.name.localeCompare(b.name));
+        return results;
+    }
 
     /* -------------------------------------------- */
     /*  Form Handler                                */
@@ -243,16 +323,134 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     }
 
     /**
-     * Results context: compendium entries after fetch.
+     * Results context: kick off async fetch, show loading state.
      */
     async _prepareResultsContext(context) {
-        // Results are fetched lazily after initial render (Task 7).
-        // For now, show a hint that no results are loaded yet.
-        context.hint = "Select a tab to browse compendium content.";
+        const def = this.#activeTabDef;
+        const filters = context.additional || getFilterDefinitions(def.documentClass, def.types ? new Set(def.types) : null);
+
+        // Kick off the async fetch — results rendered later via #renderResults
+        this.#allResults = [];
+        this.#loadedCount = 0;
+        this.#resultsPromise = CompendiumBrowser.fetch(def.documentClass, {
+            types: def.types ? new Set(def.types) : new Set(),
+            filters,
+            name: this.#searchName,
+        });
+
         context.results = [];
+        context.hint = null;
+        context.loading = true;
         context.displaySelection = this.#displaySelection;
         context.partId = "results";
         return context;
+    }
+
+    /**
+     * Render results after the fetch promise resolves, with batching for lazy loading.
+     * @param {HTMLElement} container — the results container element
+     */
+    async #renderResults(container) {
+        if (!this.#resultsPromise) return;
+
+        try {
+            this.#allResults = await this.#resultsPromise;
+            this.#loadedCount = Math.min(CompendiumBrowser.BATCHING.SIZE, this.#allResults.length);
+        } catch (err) {
+            console.error("Compendium Browser fetch error:", err);
+            this.#allResults = [];
+            this.#loadedCount = 0;
+        }
+
+        // Render the current batch
+        const batch = this.#allResults.slice(0, this.#loadedCount);
+        await this._renderBatch(container, batch);
+    }
+
+    /**
+     * Replace the results list content with a rendered batch.
+     */
+    async _renderBatch(container, batch) {
+        const listEl = container.querySelector(".item-list");
+        const loadingEl = container.querySelector(".results-loading");
+
+        if (!listEl) return;
+
+        // Hide loading spinner
+        if (loadingEl) loadingEl.style.display = "none";
+
+        // Build entries from the batch
+        const entries = batch.map(entry => this._buildEntry(entry));
+
+        // Render the entry partials
+        const template = "modules/compendium-browser-bf/templates/browser-entry.hbs";
+        const html = await Promise.all(entries.map(e =>
+            foundry.applications.handlebars.renderTemplate(template, { entry: e, displaySelection: this.#displaySelection })
+        ));
+
+        listEl.innerHTML = html.join("");
+
+        if (this.#allResults.length === 0) {
+            listEl.innerHTML = '<li class="empty">No results found.</li>';
+        }
+    }
+
+    /**
+     * Build a display-ready entry object from a compendium index entry.
+     */
+    _buildEntry(entry) {
+        const pack = game.packs.get(entry.pack);
+        const source = pack?.metadata.label || entry.pack;
+        return {
+            ...entry,
+            name: entry.name,
+            img: entry.img,
+            uuid: entry.uuid,
+            source,
+            subtitle: `BF.${entry.type[0].toUpperCase()}${entry.type.slice(1)}`,
+            selected: this.#selected.has(entry.uuid),
+        };
+    }
+
+    /**
+     * Handle scroll event on the results container for lazy loading.
+     */
+    #onScrollResults(event) {
+        const el = event.currentTarget;
+        const scrollBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+
+        // Load more when within MARGIN px of the bottom
+        if (scrollBottom < CompendiumBrowser.BATCHING.MARGIN && this.#loadedCount < this.#allResults.length) {
+            this.#loadedCount = Math.min(
+                this.#loadedCount + CompendiumBrowser.BATCHING.SIZE,
+                this.#allResults.length
+            );
+
+            const batch = this.#allResults.slice(0, this.#loadedCount);
+            // Append new entries rather than replacing
+            const listEl = el.querySelector(".item-list");
+            if (!listEl) return;
+
+            const newEntries = batch.slice(this.#loadedCount - CompendiumBrowser.BATCHING.SIZE);
+            foundry.applications.handlebars.renderTemplate(
+                "modules/compendium-browser-bf/templates/browser-entry.hbs",
+                { entry: {}, displaySelection: this.#displaySelection }
+            ).then(template => {
+                for (const entry of newEntries) {
+                    const div = document.createElement("li");
+                    div.innerHTML = template;
+                    // Rebuild with actual data by replacing the full content
+                    foundry.applications.handlebars.renderTemplate(
+                        "modules/compendium-browser-bf/templates/browser-entry.hbs",
+                        { entry: this._buildEntry(entry), displaySelection: this.#displaySelection }
+                    ).then(entryHtml => {
+                        const temp = document.createElement("li");
+                        temp.innerHTML = entryHtml;
+                        listEl.appendChild(temp.firstElementChild || temp);
+                    });
+                }
+            });
+        }
     }
 
     /**
@@ -274,6 +472,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         super._onRender(context, options);
         // Attach event listeners after render
         this.#activateListeners(context, options);
+
+        // Kick off results fetch and render when ready
+        const resultsContainer = this.element.querySelector(".browser-results .items-section");
+        if (resultsContainer && this.#resultsPromise) {
+            // Add scroll listener for lazy loading
+            resultsContainer.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
+            // Start rendering results
+            this.#renderResults(resultsContainer);
+        }
     }
 
     /**
@@ -399,6 +606,6 @@ export function initCompendiumBrowser() {
         button.type = "button";
         button.innerHTML = '<i class="fas fa-search"></i> Compendium Browser';
         button.addEventListener("click", () => new CompendiumBrowser().render({ force: true }));
-        html[0].querySelector(".header-actions")?.append(button);
+        html[0]?.querySelector(".header-actions")?.append(button);
     });
 }
