@@ -22,7 +22,7 @@
   grid-template-areas:
     "tabs sidebar results"
     "tabs sidebar footer";
-  grid-template-columns: 110px 230px 1fr;
+  grid-template-columns: 32px 230px 1fr;
   grid-template-rows: 1fr auto;
   padding: 0;
   overflow: hidden;
@@ -48,35 +48,35 @@
   grid-area: tabs;
 }
 
-/* ---- Tab Rail (inside window-content, leftmost column) ---- */
+/* ---- Tab Rail (icon-only, narrow) ---- */
 .compendium-browser .window-content .tabs {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
-  padding-top: 8px;
+  padding-top: 28px;
   background: var(--color-bg-option, #1a1a2e);
   border-right: 1px solid var(--color-border-dark-primary);
   overflow-y: auto;
+  width: 32px !important;
+  min-width: 32px !important;
 }
 
 .compendium-browser .window-content .tabs:empty {
   display: none;
 }
 
-/* Tab items — full-width text buttons with icons */
+/* Tab items — compact icon buttons */
 .compendium-browser .window-content .tabs > .item {
   --icon-size: 14px;
   align-items: center;
-  justify-content: flex-start;
-  flex: 0 0 auto;
+  justify-content: center;
+  flex: 0 0 32px;
   transition: all 250ms ease;
-  margin: 0;
-  border-radius: 0;
-  padding: 8px 8px 8px 12px;
+  margin: 2px;
+  border-radius: 4px;
+  padding: 4px;
   color: var(--color-text-secondary);
-  height: unset;
-  gap: 8px;
   text-decoration: none;
   border: none;
   background: none;
@@ -90,11 +90,9 @@
 .compendium-browser .window-content .tabs > .item i {
   font-size: var(--font-size-14);
   margin: 0;
-  flex: 0 0 16px;
-  text-align: center;
 }
 
-/* Active + hover — high contrast gold-on-dark */
+/* Active + hover */
 .compendium-browser .window-content .tabs > .item.active,
 .compendium-browser .window-content .tabs > .item:hover {
   text-shadow: none;
@@ -102,18 +100,13 @@
   color: var(--color-text-dark-primary, #111);
 }
 
-/* Tab text labels — always visible */
-.compendium-browser .window-content .tabs .tab-label {
-  font-size: var(--font-size-13);
-  white-space: nowrap;
-}
-
-/* Header (Advanced toggle, inside window-content) */
+/* Header (Advanced toggle, positioned absolutely) */
 .compendium-browser .window-content > .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 4px 8px 4px 12px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  padding: 4px 8px;
 }
 
 .compendium-browser .window-content > .header > div {
@@ -305,6 +298,29 @@
 }
 
 /* ---- Results Area ---- */
+.compendium-browser .results {
+  --results-padding: 6px;
+  padding: var(--results-padding) 4px 12px 4px;
+  margin-right: 4px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/* Item row — flex layout: icon | name | source | controls */
+.compendium-browser .results .item-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.compendium-browser .results .item-row .item-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .compendium-browser .results .item-row .item-image {
   width: var(--icon-size);
   height: var(--icon-size);
@@ -313,12 +329,21 @@
   flex: 0 0 var(--icon-size);
 }
 
-.compendium-browser .results {
-  --results-padding: 6px;
-  padding: var(--results-padding) 4px 12px 4px;
-  margin-right: 4px;
-  overflow-y: auto;
-  scrollbar-gutter: stable;
+.compendium-browser .results .item-row .item-name .name {
+  min-width: 0;
+}
+
+.compendium-browser .results .item-row .item-name .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compendium-browser .results .item-header.item-source {
+  text-align: right;
+  flex: 0 0 100px;
+  font-size: var(--font-size-11);
+  color: var(--color-text-secondary);
 }
 
 .compendium-browser .results > .note {
