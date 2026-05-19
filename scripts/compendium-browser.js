@@ -801,11 +801,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     _onRender(context, options) {
         super._onRender(context, options);
 
-        // Static listeners — attach only once (tab clicks, mode toggle, search, etc.)
-        if (!this.#listenersAttached) {
-            this.#listenersAttached = true;
-            this.#attachStaticListeners();
-        }
+        // Re-attach static listeners on every render — ApplicationV2 replaces
+        // this.element, so the old listeners are on a detached DOM node.
+        this.#attachStaticListeners();
 
         // Results rendering — run every time the results part is rendered
         if (!options.parts || options.parts.includes("results")) {
