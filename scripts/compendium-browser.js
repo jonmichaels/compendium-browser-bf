@@ -307,7 +307,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 }
             }
         }
-        return choices;
+        // Sort choices by display name for alphabetical listing
+        const sorted = {};
+        Object.keys(choices).sort((a, b) => choices[a].localeCompare(choices[b])).forEach(k => {
+            sorted[k] = choices[k];
+        });
+        return sorted;
     }
 
     /* -------------------------------------------- */
