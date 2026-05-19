@@ -493,14 +493,13 @@ export function applyFilter(entry, filter) {
             let hasIncludes = false;
             let hasExcludes = false;
             for (const [key, val] of Object.entries(filter.value)) {
-                if (key === "_blank" || key === "mundane") continue;  // handled separately
+                if (key === "_blank") continue;  // handled separately
                 if (val === 1) { includes[key] = true; hasIncludes = true; }
                 else if (val === -1) { excludes[key] = true; hasExcludes = true; }
             }
 
-            // Handle _blank (No Rarity / empty value) — also "mundane" key
-            let blankVal = filter.value._blank;
-            if (blankVal === undefined) blankVal = filter.value.mundane;
+            // Handle _blank (empty value)
+            const blankVal = filter.value._blank;
             const isEmpty = !rawValue || rawValue === "" || (Array.isArray(rawValue) && rawValue.length === 0);
 
             // ---- Scalar value ---- //
