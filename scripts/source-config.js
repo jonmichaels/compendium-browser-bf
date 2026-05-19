@@ -1,9 +1,8 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
- * Configure Sources — matches dnd5e layout:
- * Left sidebar: Filter Packages + package list (World, System, modules).
- * Right content: Items + Actors columns with on/off checkboxes.
+ * Configure Sources — matches dnd5e's 3-column layout using a single template.
+ * Layout: [sidebar: Filter + packages] [Items column] [Actors column]
  * All packs default to CHECKED.
  */
 export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -27,14 +26,9 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
     static PARTS = {
-        sidebar: {
-            id: "sidebar",
-            classes: ["sidebar"],
-            template: "modules/compendium-browser-bf/templates/source-config-sidebar.hbs",
-        },
-        content: {
-            id: "content",
+        main: {
             template: "modules/compendium-browser-bf/templates/source-config.hbs",
+            scrollable: [""],
         },
     };
 
@@ -65,13 +59,9 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             pkg.items.sort((a, b) => a.label.localeCompare(b.label));
             pkg.actors.sort((a, b) => a.label.localeCompare(b.label));
             pkg.count = pkg.items.length + pkg.actors.length;
-
             if (pn === "World") pkg.label = "World";
             else if (pn === sysId) pkg.label = game.system.title || "System";
-            else {
-                const mod = game.modules.get(pn);
-                pkg.label = mod?.title || pn;
-            }
+            else { const mod = game.modules.get(pn); pkg.label = mod?.title || pn; }
             packages.push(pkg);
         }
 
@@ -87,23 +77,13 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             this.#selectedPackage = packages[0].id;
         }
 
-        return { packages };
-    }
+        const sel = packages.find(p => p.id === this.#selectedPackage) || {};
 
-    async _preparePartContext(partId, context, options) {
-        if (partId === "sidebar") {
-            context.packages = context.packages.map(p => ({
-                ...p,
-                active: p.id === this.#selectedPackage,
-            }));
-        }
-        if (partId === "content") {
-            const pkg = context.packages.find(p => p.id === this.#selectedPackage) || {};
-            context.items = pkg.items || [];
-            context.actors = pkg.actors || [];
-            // NOTE: no packageLabel — reference has no title above columns
-        }
-        return context;
+        return {
+            packages: packages.map(p => ({ ...p, active: p.id === this.#selectedPackage })),
+            items: sel.items || [],
+            actors: sel.actors || [],
+        };
     }
 
     static #onSelectPackage(event, target) {
@@ -116,9 +96,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static #onSubmit(event, form, formData) {
         const config = {};
         for (const [key, value] of formData.entries()) {
-            if (key.startsWith("pack-")) {
-                config[key.slice(5)] = value === "true";
-            }
+            if (key.startsWith("pack-")) config[key.slice(5)] = value === "true";
         }
         game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
     }

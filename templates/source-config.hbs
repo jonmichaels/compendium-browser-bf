@@ -1,5 +1,23 @@
-<div>
-    <div class="packs">
+<div class="source-config-panels">
+    <!-- COLUMN 1: Package sidebar -->
+    <div class="source-sidebar">
+        <search>
+            <input type="text" name="filter" placeholder="Filter Packages">
+        </search>
+        <ol class="package-list">
+            {{#each packages}}
+            <li class="{{#if active}}active{{/if}}" data-package="{{ id }}">
+                <button type="button" class="package" data-action="selectPackage">
+                    <span>{{ label }}</span>
+                    <span class="count">{{ count }}</span>
+                </button>
+            </li>
+            {{/each}}
+        </ol>
+    </div>
+
+    <!-- COLUMN 2+3: Items and Actors -->
+    <div class="source-packs">
         <section class="packs-section">
             <h3>Items</h3>
             <ol class="packs-list">
@@ -33,7 +51,7 @@
             </ol>
         </section>
     </div>
-    <footer class="form-footer">
-        <button type="submit"><i class="fas fa-save"></i> Save</button>
-    </footer>
 </div>
+<footer class="form-footer">
+    <button type="submit"><i class="fas fa-save"></i> Save</button>
+</footer>
