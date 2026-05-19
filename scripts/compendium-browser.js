@@ -135,7 +135,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     #lastClickedEntry = null;
 
     /** @type {boolean} — whether initial listeners have been attached */
-    #listenersAttached = false;
+    /** @type {Element|null} — tracks which element we last attached listeners to */
+    #lastAttachedElement = null;
 
     /** @type {Array<object>|null} — cached filter definitions for DOM value reading */
     #cachedFilterDefs = null;
@@ -801,9 +802,13 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     _onRender(context, options) {
         super._onRender(context, options);
 
-        // Re-attach static listeners on every render — ApplicationV2 replaces
-        // this.element, so the old listeners are on a detached DOM node.
-        this.#attachStaticListeners();
+        // Re-attach static listeners only when this.element changes (ApplicationV2
+        // replaces it on render). Tracking by element reference avoids stacking
+        // duplicate listeners on the same element.
+        if (this.element !== this.#lastAttachedElement) {
+            this.#lastAttachedElement = this.element;
+            this.#attachStaticListeners();
+        }
 
         // Results rendering — run every time the results part is rendered
         if (!options.parts || options.parts.includes("results")) {
