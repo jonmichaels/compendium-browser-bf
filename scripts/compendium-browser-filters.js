@@ -502,6 +502,10 @@ export function applyFilter(entry, filter) {
             // with an empty/null rarity; "Mundane" is just a display label.
             if (filter.value.mundane !== undefined && filter.value._blank === undefined) {
                 filter.value._blank = filter.value.mundane;
+                // When including mundane items (_blank=1), set hasIncludes so
+                // non-empty rarities are filtered out by the include check below.
+                if (filter.value.mundane === 1) hasIncludes = true;
+                else if (filter.value.mundane === -1) hasExcludes = true;
             }
 
             // Handle _blank (empty value)
@@ -513,7 +517,10 @@ export function applyFilter(entry, filter) {
                 const strVal = String(rawValue);
 
                 // Check includes: entry must match at least one include
-                if (hasIncludes && !includes[strVal]) return false;
+                if (hasIncludes && !includes[strVal]) {
+                    // If _blank is in include mode and value is empty, let it pass
+                    if (!(blankVal === 1 && isEmpty)) return false;
+                }
 
                 // Check excludes: entry must NOT match any exclude
                 if (excludes[strVal]) return false;
