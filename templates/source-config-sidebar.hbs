@@ -1,15 +1,56 @@
-<div>
-    <search>
-        <input type="text" name="filter" placeholder="Filter Packages">
+<section class="sidebar filter-element">
+    <search aria-label="Filter Packages">
+        <input type="text" name="filter" placeholder="Filter Packages"
+               value="{{ filter }}">
+        <ul class="unlist controls">
+            <li>
+                <button type="button" class="unbutton filter-control" data-action="clearFilter"
+                        data-tooltip aria-label="Clear Filter">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </li>
+        </ul>
     </search>
-    <ol class="package-list">
-        {{#each packages}}
-        <li class="{{#if active}}active{{/if}}" data-package="{{ id }}">
-            <button type="button" class="package" data-action="selectPackage">
-                <span>{{ label }}</span>
-                <span class="count">{{ count }}</span>
-            </button>
+    <menu class="package-list unlist base">
+        <li {{#if packages.world.active}}class="active"{{/if}} data-package-id="{{ packages.world.id }}">
+            <label class="checkbox">
+                <input type="checkbox" name="{{ packages.world.id }}"
+                       {{ checked packages.world.checked }}
+                       data-type="package"
+                       {{#if packages.world.indeterminate}}data-indeterminate="true"{{/if}}>
+            </label>
+            <div class="package" data-action="selectPackage">
+                <span class="title">{{ localize "PACKAGE.Type.world" }}</span>
+                <span class="value">{{ packages.world.count }}</span>
+            </div>
+        </li>
+        <li {{#if packages.system.active}}class="active"{{/if}} data-package-id="{{ packages.system.id }}">
+            <label class="checkbox">
+                <input type="checkbox" name="{{ packages.system.id }}"
+                       {{ checked packages.system.checked }}
+                       data-type="package"
+                       {{#if packages.system.indeterminate}}data-indeterminate="true"{{/if}}>
+            </label>
+            <div class="package" data-action="selectPackage">
+                <span class="title">{{ localize "PACKAGE.Type.system" }}</span>
+                <span class="value">{{ packages.system.count }}</span>
+            </div>
+        </li>
+    </menu>
+    <menu class="package-list unlist modules">
+        {{#each packages.modules}}
+        <li {{#if active}}class="active"{{/if}} data-package-id="{{ id }}" data-filter="{{ filter }}">
+            <label class="checkbox">
+                <input type="checkbox" name="{{ id }}"
+                       {{ checked checked }}
+                       data-type="package"
+                       {{#if indeterminate}}data-indeterminate="true"{{/if}}>
+            </label>
+            <div class="package" data-action="selectPackage">
+                <span class="title">{{ title }}</span>
+                <span class="value">{{ count }}</span>
+            </div>
         </li>
         {{/each}}
-    </ol>
-</div>
+    </menu>
+</section>

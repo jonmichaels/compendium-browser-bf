@@ -1,72 +1,61 @@
-<div class="source-config-panels">
-    <div class="source-sidebar">
-        <search>
-            <input type="text" name="filter" placeholder="Filter Packages">
-        </search>
-        <ol class="package-list">
-            {{#each packages}}
-            <li class="{{#if active}}active{{/if}}" data-package="{{ id }}">
-                <label class="package-row">
-                    <input type="checkbox" name="package-{{ id }}" value="true"
-                           {{ checked active }} data-action="togglePackage">
-                    <button type="button" class="package" data-action="selectPackage">
-                        <span>{{ label }}</span>
-                        <span class="count">{{ count }}</span>
-                    </button>
+<section class="packs">
+    {{#if packs.items.entries.length}}
+    <fieldset class="card packs-section">
+        <legend>{{ localize "DOCUMENT.Items" }}</legend>
+        <menu class="packs-list unlist items">
+            {{#if packs.items.showAll}}
+            <li class="all">
+                <label class="checkbox">
+                    <input type="checkbox" name="all-items"
+                           {{ checked packs.items.checked }}
+                           data-type="pack"
+                           {{#if packs.items.indeterminate}}data-indeterminate="true"{{/if}}>
+                    <span class="title">{{ localize "all" }}</span>
+                </label>
+            </li>
+            {{/if}}
+            {{#each packs.items.entries}}
+            <li>
+                <label class="checkbox">
+                    <input type="checkbox" name="{{ id }}"
+                           {{ checked checked }}
+                           data-type="pack">
+                    <span class="title">{{ title }}</span>
+                    {{#if tag}}<span class="tag">{{ tag }}</span>{{/if}}
                 </label>
             </li>
             {{/each}}
-        </ol>
-    </div>
+        </menu>
+    </fieldset>
+    {{/if}}
 
-    <div class="packs">
-        <section class="packs-section">
-            <h3>Items</h3>
-            <ul class="packs-list">
-                <li class="pack-all">
-                    <label>
-                        <input type="checkbox" name="pack-all-items" value="true"
-                               {{ checked allItemsEnabled }}
-                               data-action="toggleAllPacks" data-section="items">
-                        <span>All</span>
-                    </label>
-                </li>
-                {{#each items}}
-                <li>
-                    <label>
-                        <input type="checkbox" name="pack-{{ id }}" value="true"
-                               {{ checked enabled }} data-action="autoSave">
-                        <span>{{ label }}</span>
-                    </label>
-                </li>
-                {{else}}
-                <li class="empty">None</li>
-                {{/each}}
-            </ul>
-        </section>
-        <section class="packs-section">
-            <h3>Actors</h3>
-            <ul class="packs-list">
-                <li class="pack-all">
-                    <label>
-                        <input type="checkbox" name="pack-all-actors" value="true"
-                               {{ checked allActorsEnabled }}
-                               data-action="toggleAllPacks" data-section="actors">
-                        <span>All</span>
-                    </label>
-                </li>
-                {{#each actors}}
-                <li>
-                    <label>
-                        <input type="checkbox" name="pack-{{ id }}" value="true"
-                               {{ checked enabled }} data-action="autoSave">
-                        <span>{{ label }}</span>
-                    </label>
-                </li>
-                {{else}}
-                <li class="empty">None</li>
-                {{/each}}
-            </ul>
-        </section>
-    </div>
-</div>
+    {{#if packs.actors.entries.length}}
+    <fieldset class="card packs-section">
+        <legend>{{ localize "DOCUMENT.Actors" }}</legend>
+        <menu class="packs-list unlist actors">
+            {{#if packs.actors.showAll}}
+            <li class="all">
+                <label class="checkbox">
+                    <input type="checkbox" name="all-actors"
+                           {{ checked packs.actors.checked }}
+                           data-type="pack"
+                           {{#if packs.actors.indeterminate}}data-indeterminate="true"{{/if}}>
+                    <span class="title">{{ localize "all" }}</span>
+                </label>
+            </li>
+            {{/if}}
+            {{#each packs.actors.entries}}
+            <li>
+                <label class="checkbox">
+                    <input type="checkbox" name="{{ id }}"
+                           {{ checked checked }}
+                           data-type="pack">
+                    <span class="title">{{ title }}</span>
+                    {{#if tag}}<span class="tag">{{ tag }}</span>{{/if}}
+                </label>
+            </li>
+            {{/each}}
+        </menu>
+    </fieldset>
+    {{/if}}
+</section>

@@ -1,201 +1,286 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
- * Configure Sources — matches dnd5e.
- * Single template, checkbox toggle per package, auto-save on any change.
+ * Configure Sources — matches dnd5e's CompendiumBrowserSettingsConfig.
+ * Two-part template: sidebar (packages) + packs (Items & Actors checkboxes).
+ * Uses _onChangeForm → data-type dispatch, same as dnd5e.
  */
 export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
         id: "compendium-browser-bf-source-config",
-        classes: ["compendium-browser", "source-config"],
+        classes: ["dialog-lg"],
         tag: "form",
         window: {
             title: "compendium-browser-bf.ConfigureSources",
-            minimizable: false,
             resizable: true,
         },
-        position: { width: 650, height: 500 },
+        position: { width: 800, height: 650 },
         actions: {
+            clearFilter: SourceConfig.#onClearPackageFilter,
             selectPackage: SourceConfig.#onSelectPackage,
-            togglePackage: SourceConfig.#onTogglePackage,
-            autoSave: SourceConfig.#onAutoSave,
-            toggleAllPacks: SourceConfig.#onToggleAllPacks,
         },
+        selected: "system",
     };
 
     static PARTS = {
-        main: {
+        sidebar: {
+            id: "sidebar",
+            template: "modules/compendium-browser-bf/templates/source-config-sidebar.hbs",
+        },
+        packs: {
+            id: "packs",
             template: "modules/compendium-browser-bf/templates/source-config.hbs",
-            scrollable: [""],
         },
     };
 
-    #selectedPackage = null;
-    #packageData = {};
+    #filter = "";
+    #selected;
+
+    constructor(options) {
+        super(options);
+        this.#selected = this.options.selected;
+    }
+
+    /**
+     * The number of milliseconds to delay between user keypresses before executing the package filter.
+     * @type {number}
+     */
+    static FILTER_DELAY = 200;
+
+    _debouncedFilter = foundry.utils.debounce(this._onFilterPackages.bind(this), this.constructor.FILTER_DELAY);
+
+    /* -------------------------------------------- */
+    /*  Context Preparation                          */
+    /* -------------------------------------------- */
 
     async _prepareContext(options) {
-        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
-        const sysId = game.system.id;
-
-        // Separate packs by packageType (world, system, module) for proper ordering
-        const worldPacks = [];
-        const systemPacks = [];
-        const modulePacks = [];
+        const sources = this.constructor.collateSources();
+        const byPackage = { world: new Set(), system: new Set() };
 
         for (const pack of game.packs) {
+            const { documentName } = pack;
+            if (documentName !== "Actor" && documentName !== "Item") continue;
+
             const pType = pack.metadata.packageType || "module";
-            if (pType === "world") worldPacks.push(pack);
-            else if (pType === "system") systemPacks.push(pack);
-            else modulePacks.push(pack);
-        }
-
-        // Build package data grouped by package name (derived from pack ID prefix)
-        function buildPkg(packs, pkgId, pkgLabel, sortOrder) {
-            const pkg = { id: pkgId, label: pkgLabel, items: [], actors: [], packIds: [], sortOrder };
-            for (const pack of packs) {
-                pkg.packIds.push(pack.metadata.id);
-                const entry = {
-                    id: pack.metadata.id,
-                    label: pack.metadata.label,
-                    enabled: config[pack.metadata.id] !== false,
-                };
-                if (pack.metadata.type === "Item") pkg.items.push(entry);
-                else if (pack.metadata.type === "Actor") pkg.actors.push(entry);
+            let entry;
+            if (pType === "world" || pType === "system") {
+                entry = byPackage[pType];
+            } else {
+                entry = byPackage[`module.${pack.metadata.packageName}`] ??= new Set();
             }
-            pkg.items.sort((a, b) => a.label.localeCompare(b.label));
-            pkg.actors.sort((a, b) => a.label.localeCompare(b.label));
-            pkg.count = pkg.items.length + pkg.actors.length;
-            pkg.active = pkg.items.every(e => e.enabled) && pkg.actors.every(a => a.enabled);
-            return pkg;
+            entry.add(pack.metadata.id);
         }
 
-        const packages = [];
+        const packages = {};
+        packages.world = this._preparePackageContext("world", game.world, byPackage.world, sources);
+        packages.system = this._preparePackageContext("system", game.system, byPackage.system, sources);
 
-        // ALWAYS include World and System entries — even if zero packs
-        // World compendiums (packageType === "world")
-        packages.push(buildPkg(worldPacks, "world", "World", 0));
+        const modules = Object.entries(byPackage).reduce((arr, [k, pks]) => {
+            if (k === "world" || k === "system") return arr;
+            const id = k.slice(7);
+            const mod = game.modules.get(id);
+            arr.push(this._preparePackageContext(k, mod, pks, sources));
+            return arr;
+        }, []);
+        modules.sort((a, b) => a.title.localeCompare(b.title, game.i18n.lang));
+        packages.modules = Object.fromEntries(modules.map(m => [m.id, m]));
 
-        // System compendiums (packageType === "system")
-        packages.push(buildPkg(systemPacks, sysId, game.system.title || "System", 1));
-
-        // Module compendiums — group by package name (module ID from pack.metadata.id prefix)
-        const mMap = new Map();
-        for (const pack of modulePacks) {
-            const pn = pack.metadata.id.split(".")[0]; // "module-name.packName" → "module-name"
-            if (!mMap.has(pn)) mMap.set(pn, []);
-            mMap.get(pn).push(pack);
-        }
-        for (const [pn, pks] of mMap) {
-            const mod = game.modules.get(pn);
-            packages.push(buildPkg(pks, pn, mod?.title || pn, 2));
-        }
-
-        // Sort: world (0) → system (1) → modules (2) by label
-        packages.sort((a, b) => {
-            if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
-            return a.label.localeCompare(b.label);
+        const packs = { actors: {}, items: {} };
+        [["actors", "Actor"], ["items", "Item"]].forEach(([p, type]) => {
+            packs[p] = this._preparePackGroupContext(type, byPackage[this.#selected], sources);
         });
 
-        if (!this.#selectedPackage && packages.length > 0) {
-            this.#selectedPackage = packages[0].id;
-        }
-
-        // Store package data for toggle logic
-        this.#packageData = {};
-        for (const p of packages) {
-            this.#packageData[p.id] = {
-                packIds: p.packIds,
-                items: p.items,
-                actors: p.actors,
-            };
-        }
-
-        const sel = packages.find(p => p.id === this.#selectedPackage) || {};
-
         return {
-            packages: packages.map(p => ({
-                ...p,
-                active: p.active,
-                allItemsEnabled: p.items.length > 0 && p.items.every(e => e.enabled),
-                allActorsEnabled: p.actors.length > 0 && p.actors.every(a => a.enabled),
-            })),
-            items: (sel.items || []).map(i => ({ ...i })),
-            actors: (sel.actors || []).map(a => ({ ...a })),
+            ...await super._prepareContext(options),
+            packages,
+            packs,
+            filter: this.#filter,
         };
     }
 
-    /** Select a package in the sidebar to view its packs. */
-    static #onSelectPackage(event, target) {
-        const li = target.closest("[data-package]");
-        if (!li) return;
-        this.#selectedPackage = li.dataset.package;
-        this.render();
+    _preparePackageContext(id, pkg, packs, sources) {
+        const title = pkg?.title ?? id;
+        const all = packs.isSubsetOf(sources);
+        const indeterminate = !all && packs.intersects(sources);
+        return {
+            id,
+            title,
+            indeterminate,
+            checked: indeterminate || all,
+            count: packs.size,
+            active: this.#selected === id,
+            filter: title.replace(/[^\p{L} ]/gu, "").toLocaleLowerCase(game.i18n.lang),
+        };
     }
 
-    /** Toggle entire package on/off — sets all packs in the package to the checkbox state. */
-    static #onTogglePackage(event, target) {
-        const li = target.closest("[data-package]");
-        if (!li) return;
-        const pkgId = li.dataset.package;
-        const enabled = target.checked;
-        const pkg = this.#packageData[pkgId];
-        if (!pkg) return;
+    _preparePackGroupContext(documentType, packs, sources) {
+        packs = packs.filter(id => {
+            const pack = game.packs.get(id);
+            return pack && pack.documentName === documentType;
+        });
+        const all = packs.isSubsetOf(sources);
+        const indeterminate = !all && packs.intersects(sources);
+        return {
+            indeterminate,
+            checked: indeterminate || all,
+            showAll: packs.size > 1,
+            entries: Array.from(packs.map(id => {
+                const pack = game.packs.get(id);
+                if (!pack) return null;
+                const { title, metadata } = pack;
+                const { packageName, flags } = metadata;
+                let tag = "";
+                // Source book abbreviation for Black Flag packs
+                if (packageName === "black-flag" && flags?.["black-flag"]?.sourceBook) {
+                    tag = flags["black-flag"].sourceBook;
+                }
+                return {
+                    tag,
+                    title,
+                    id: pack.metadata.id,
+                    checked: sources.has(id),
+                };
+            })).filter(Boolean).sort((a, b) => {
+                return a.tag?.localeCompare(b.tag) || a.title.localeCompare(b.title, game.i18n.lang);
+            }),
+        };
+    }
 
-        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
-        for (const id of pkg.packIds) {
-            config[id] = enabled;
+    /* -------------------------------------------- */
+    /*  Event Handlers                               */
+    /* -------------------------------------------- */
+
+    /** @override */
+    _onChangeForm(formConfig, event) {
+        super._onChangeForm(formConfig, event);
+        if (event.target.dataset.type) this._onToggleSource(event.target);
+    }
+
+    _onToggleSource(target) {
+        let packs;
+        switch (target.dataset.type) {
+            case "pack": packs = this._onTogglePack(target); break;
+            case "package": packs = this._onTogglePackage(target); break;
+            default: return;
         }
-        game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
+        const setting = { ...game.settings.get("compendium-browser-bf", "packSourceConfiguration"), ...packs };
+        game.settings.set("compendium-browser-bf", "packSourceConfiguration", setting);
 
-        // Refresh any open CompendiumBrowser windows so they see the change immediately
-        SourceConfig.#refreshBrowsers();
-
-        this.render();
-    }
-
-    /** Auto-save individual pack checkbox changes. */
-    static #onAutoSave(event, target) {
-        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
-        if (target.name?.startsWith("pack-")) {
-            config[target.name.slice(5)] = target.checked;
-        }
-        game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
-
-        // Refresh any open CompendiumBrowser windows
-        SourceConfig.#refreshBrowsers();
-
-        this.render();
-    }
-
-    /** Toggle "All" checkbox — cascades to all items or actors in the selected package. */
-    static #onToggleAllPacks(event, target) {
-        const checked = target.checked;
-        const section = target.dataset.section; // "items" or "actors"
-        const pkgId = this.#selectedPackage;
-        const pkg = this.#packageData[pkgId];
-        if (!pkg) return;
-
-        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
-        const packs = section === "items" ? pkg.items : pkg.actors;
-        for (const entry of packs) {
-            config[entry.id] = checked;
-        }
-        game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
-
-        // Refresh any open CompendiumBrowser windows
-        SourceConfig.#refreshBrowsers();
-
-        this.render();
-    }
-
-    /** Find all open CompendiumBrowser instances and force them to re-fetch. */
-    static #refreshBrowsers() {
+        // Refresh any open CompendiumBrowser so the user sees changes immediately
         for (const w of Object.values(ui.windows)) {
-            if (w.id === "compendium-browser-bf") {
-                // Force full re-render — _prepareResultsContext will call fetch() with
-                // fresh collateSources() which reads the updated settings
-                w.render({ force: true });
-            }
+            if (w.id === "compendium-browser-bf") w.render({ force: true });
         }
+
+        this.render();
+    }
+
+    _onTogglePack(target) {
+        const packs = {};
+        const { name, checked, indeterminate } = target;
+        if (name === "all-items" || name === "all-actors") {
+            const [, documentType] = name.split("-");
+            const pkg = this.#selected === "world"
+                ? game.world
+                : this.#selected === "system"
+                    ? game.system
+                    : game.modules.get(this.#selected.slice(7));
+            for (const { id, type } of pkg.packs) {
+                if (game[documentType].documentName === type) {
+                    packs[id] = indeterminate ? false : checked;
+                }
+            }
+        } else {
+            packs[name] = checked;
+        }
+        return packs;
+    }
+
+    _onTogglePackage(target) {
+        const packs = {};
+        const { name, checked, indeterminate } = target;
+        const pkg = name === "world"
+            ? game.world
+            : name === "system"
+                ? game.system
+                : game.modules.get(name.slice(7));
+        for (const { id } of pkg.packs) {
+            packs[id] = indeterminate ? false : checked;
+        }
+        return packs;
+    }
+
+    /* -------------------------------------------- */
+    /*  Source Collation                             */
+    /* -------------------------------------------- */
+
+    static collateSources() {
+        const sources = new Set();
+        const setting = game.settings.get("compendium-browser-bf", "packSourceConfiguration");
+        for (const pack of game.packs) {
+            const { documentName } = pack;
+            if (documentName !== "Actor" && documentName !== "Item") continue;
+            if (setting[pack.metadata.id] !== false) sources.add(pack.metadata.id);
+        }
+        return sources;
+    }
+
+    /* -------------------------------------------- */
+    /*  Render Hooks                                 */
+    /* -------------------------------------------- */
+
+    /** @override */
+    _onRender(context, options) {
+        super._onRender(context, options);
+        // Set indeterminate state on package and "All" checkboxes (DOM-only property)
+        for (const el of this.element.querySelectorAll("input[data-type]")) {
+            const { type, indeterminate } = el.dataset;
+            if (indeterminate === "true") el.indeterminate = true;
+        }
+    }
+
+    /** @override */
+    _attachFrameListeners() {
+        super._attachFrameListeners();
+        this.element.addEventListener("keydown", this._debouncedFilter, { passive: true });
+    }
+
+    /** @override */
+    _attachPartListeners(partId, htmlElement, options) {
+        super._attachPartListeners(partId, htmlElement, options);
+        if (partId === "sidebar") this._filterPackages();
+    }
+
+    /* -------------------------------------------- */
+    /*  Package Filtering                            */
+    /* -------------------------------------------- */
+
+    _filterPackages() {
+        const query = this.#filter.replace(/[^\p{L} ]/gu, "").toLocaleLowerCase(game.i18n.lang);
+        this.element.querySelectorAll(".package-list.modules > li").forEach(item => {
+            item.toggleAttribute("hidden", query && !item.dataset.filter.includes(query));
+        });
+    }
+
+    _onFilterPackages(event) {
+        if (!event.target.matches("search > input")) return;
+        this.#filter = event.target.value;
+        this._filterPackages();
+    }
+
+    /* -------------------------------------------- */
+    /*  Static Actions                               */
+    /* -------------------------------------------- */
+
+    static #onClearPackageFilter(event, target) {
+        const input = target.closest("search").querySelector(":scope > input");
+        input.value = this.#filter = "";
+        this._filterPackages();
+    }
+
+    static #onSelectPackage(event, target) {
+        const { packageId } = target.closest("[data-package-id]")?.dataset ?? {};
+        if (!packageId) return;
+        this.#selected = packageId;
+        this.render();
     }
 }

@@ -137,13 +137,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /**
      * Resolve which compendium packs are enabled for browsing.
      * Default: all packs enabled unless explicitly disabled in settings.
-     * @returns {object<string, boolean>} — pack ID → enabled
+     * @returns {Set<string>} — set of enabled pack collection IDs
      */
     static collateSources() {
-        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
-        const sources = {};
+        const sources = new Set();
+        const setting = game.settings.get("compendium-browser-bf", "packSourceConfiguration");
         for (const pack of game.packs) {
-            sources[pack.metadata.id] = config[pack.metadata.id] !== false;
+            const { documentName } = pack;
+            if (documentName !== "Actor" && documentName !== "Item") continue;
+            if (setting[pack.metadata.id] !== false) sources.add(pack.metadata.id);
         }
         return sources;
     }
@@ -174,7 +176,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             if (p.metadata.type !== documentClass) return false;
             const packTypes = p.metadata.flags?.["black-flag"]?.types;
             if (packTypes && types.size > 0 && !packTypes.some(t => types.has(t))) return false;
-            return collatedSources[p.metadata.id] !== false;
+            return collatedSources.has(p.metadata.id);
         });
 
         // Fetch indexes from all matching packs
@@ -396,7 +398,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         const seenModules = new Set();
         for (const pack of game.packs) {
             if (pack.metadata.type !== def.documentClass) continue;
-            if (collatedSources[pack.metadata.id] === false) continue;
+            if (!collatedSources.has(pack.metadata.id)) continue;
 
             const pkgName = pack.metadata.packageName || pack.metadata.id;
             if (seenModules.has(pkgName)) continue;
