@@ -1,38 +1,40 @@
-<div class="packs">
+<div>
     {{#if selectedPackage}}
-    <section class="packs-section">
-        <h3>Items</h3>
-        <ol class="packs-list">
-            {{#each selectedPackage.items}}
-            <li>
-                <label>
-                    <input type="checkbox" name="pack-{{ id }}" value="true"
-                           {{ checked enabled }}>
-                    <span>{{ label }}</span>
-                </label>
-            </li>
-            {{/each}}
-        </ol>
-    </section>
-    <section class="packs-section">
-        <h3>Actors</h3>
-        <ol class="packs-list">
-            {{#each selectedPackage.actors}}
-            <li>
-                <label>
-                    <input type="checkbox" name="pack-{{ id }}" value="true"
-                           {{ checked enabled }}>
-                    <span>{{ label }}</span>
-                </label>
-            </li>
-            {{/each}}
-        </ol>
-    </section>
+    <div class="packs">
+        <section class="packs-section">
+            <h3>Items</h3>
+            <ol class="packs-list">
+                {{#each selectedPackage.items}}
+                <li>
+                    <label>
+                        <input type="checkbox" name="pack-{{ id }}" value="true"
+                               {{ checked enabled }}>
+                        <span>{{ label }}</span>
+                    </label>
+                </li>
+                {{/each}}
+            </ol>
+        </section>
+        <section class="packs-section">
+            <h3>Actors</h3>
+            <ol class="packs-list">
+                {{#each selectedPackage.actors}}
+                <li>
+                    <label>
+                        <input type="checkbox" name="pack-{{ id }}" value="true"
+                               {{ checked enabled }}>
+                        <span>{{ label }}</span>
+                    </label>
+                </li>
+                {{/each}}
+            </ol>
+        </section>
+    </div>
     {{else}}
     <p class="notes">Select a package from the sidebar to configure its packs.</p>
     {{/if}}
-</div>
 
-<footer class="form-footer">
-    <button type="submit"><i class="fas fa-save"></i> Save</button>
-</footer>
+    <footer class="form-footer">
+        <button type="submit"><i class="fas fa-save"></i> Save</button>
+    </footer>
+</div>
