@@ -63,24 +63,6 @@
             </div>
         </div>
         {{/if}}
-        {{#if sources.length}}
-        <div class="filter filter-set" data-filter-id="pack">
-            <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">SOURCE</span><i class="fa-solid fa-caret-down" inert></i></label></div>
-            <div class="collapsible-content">
-                <div class="wrapper">
-                    {{#each sources}}
-                    <div class="filter-choice">
-                        <label>
-                            <span class="filter-state" data-key="source.{{ key }}" data-value="0"></span>
-                            <input type="hidden" name="source.{{ key }}" value="0">
-                            <span>{{ label }}</span>
-                        </label>
-                    </div>
-                    {{/each}}
-                </div>
-            </div>
-        </div>
-        {{/if}}
         {{#each additional}}
         {{#if (eq type "boolean")}}
         <div class="filter filter-boolean" data-filter-id="{{ key }}">
@@ -110,5 +92,23 @@
         <div class="filter" data-filter-id="{{ key }}">{{ label }}</div>
         {{/if}}
         {{/each}}
+        {{#if sources.length}}
+        <div class="filter filter-set" data-filter-id="pack">
+            <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">SOURCE</span><i class="fa-solid fa-caret-down" inert></i></label></div>
+            <div class="collapsible-content">
+                <div class="wrapper">
+                    {{#each sources}}
+                    <div class="filter-choice">
+                        <label>
+                            <span class="filter-state" data-key="source.{{ key }}" data-value="0"></span>
+                            <input type="hidden" name="source.{{ key }}" value="0">
+                            <span>{{ label }}</span>
+                        </label>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        {{/if}}
     </div>
 </div>
