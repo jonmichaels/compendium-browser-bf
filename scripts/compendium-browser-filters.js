@@ -228,12 +228,22 @@ const ITEM_FILTERS = {
     ]),
 
     // subclass — class filter (which class the subclass belongs to)
+    // Black Flag stores parent class at system.identifier.class on the full document,
+    // which is NOT in the compendium index (only system.container is indexed).
+    // Use _documentCheck to load full subclass documents for filtering.
     subclass: new Map([
         ["class", {
             label: "Classes",
             type: "set",
-            keyPath: "system.classIdentifier",
-            config: { fn: "classIdentifiers" },
+            _documentCheck(doc, filterValue) {
+                const classId = doc?.system?.identifier?.class;
+                if (!classId || !filterValue) return true;  // no class or filter off — pass
+                const state = filterValue[classId] || 0;
+                const hasIncludes = Object.values(filterValue).some(v => v === 1);
+                if (state === -1) return false;               // explicitly excluded
+                if (hasIncludes && state !== 1) return false; // include-only mode — not included
+                return true;
+            },
         }],
     ]),
 
@@ -372,6 +382,11 @@ function resolveAll(filterMap) {
         // Store the raw def for filtering logic
         resolved._keyPath = def.keyPath || null;
         resolved._transform = def.transform || null;
+
+        // Preserve _documentCheck for filters that need full documents (e.g., BF class filter)
+        if (def._documentCheck) {
+            resolved._documentCheck = def._documentCheck;
+        }
 
         result.push(resolved);
     }

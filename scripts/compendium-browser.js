@@ -181,6 +181,10 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             if (f._keyPath) fieldSet.add(f._keyPath);
         }
 
+        // Separate _documentCheck filters (need full doc loading, e.g., class filter on subclasses)
+        const docCheckFilters = filters.filter(f => f._documentCheck);
+        const indexFilters = filters.filter(f => !f._documentCheck);
+
         // Get matching compendium packs
         const packs = game.packs.filter(p => {
             if (p.metadata.type !== documentClass) return false;
@@ -215,8 +219,19 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                     if (hasIncludes && state !== 1) continue; // include-only mode — drop non-included
                 }
 
-                // Custom filters
-                if (filters.length > 0 && !applyAllFilters(entry, filters)) continue;
+                // Index-based custom filters
+                if (indexFilters.length > 0 && !applyAllFilters(entry, indexFilters)) continue;
+
+                // Document-check filters: load full document and evaluate
+                let skip = false;
+                for (const f of docCheckFilters) {
+                    if (!f.value) continue;  // no filter values — pass all
+                    const uuid = `Compendium.${pack.metadata.id}.${entry._id}`;
+                    const doc = await fromUuid(uuid);
+                    const passes = doc && f._documentCheck(doc, f.value);
+                    if (!passes) { skip = true; break; }
+                }
+                if (skip) continue;
 
                 results.push({
                     ...entry,
@@ -280,10 +295,13 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         for (const pack of game.packs) {
             if (pack.metadata.type !== "Item") continue;
             if (!collatedSources.has(pack.metadata.id)) continue;
-            const entries = await pack.getIndex({ fields: ["name", "system.identifier"] });
+            // Load index to find class-type entries, then load full docs for identifiers
+            const entries = await pack.getIndex({ fields: ["name", "type"] });
             for (const entry of entries) {
                 if (entry.type !== "class") continue;
-                const id = entry["system.identifier"] || entry.system?.identifier;
+                const uuid = `Compendium.${pack.metadata.id}.${entry._id}`;
+                const doc = await fromUuid(uuid);
+                const id = doc?.system?.identifier?.value;
                 if (id && !choices[id]) {
                     choices[id] = entry.name;
                 }
