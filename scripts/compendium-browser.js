@@ -989,7 +989,7 @@ export function initCompendiumBrowser() {
         const button = document.createElement("button");
         button.className = "compendium-browser-btn";
         button.type = "button";
-        button.innerHTML = '<i class="fas fa-search"></i> Compendium Browser';
+        button.innerHTML = `<i class="fas fa-book-open-reader"></i> ${game.i18n.localize("compendium-browser-bf.OpenBrowser")}`;
         button.addEventListener("click", () => {
             const existing = Object.values(ui.windows).find(
                 w => w.id === "compendium-browser-bf"
