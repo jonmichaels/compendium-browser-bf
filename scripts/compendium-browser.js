@@ -402,6 +402,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         context.additional = getFilterDefinitions(def.documentClass, typeSet);
         this.#cachedFilterDefs = context.additional;
 
+        // Extract hasSpellcasting filter for 3-state rendering above Source
+        context.hasSpellcastingFilter = context.additional.find(f => f.key === "hasSpellcasting") || null;
+        if (context.hasSpellcastingFilter) {
+            this.#cachedFilterDefs = [context.hasSpellcastingFilter, ...context.additional.filter(f => f.key !== "hasSpellcasting")];
+        } else {
+            this.#cachedFilterDefs = context.additional;
+        }
+        context.additional = context.additional.filter(f => f.key !== "hasSpellcasting");
+
         // Sources — deduplicate by packageName, use abbreviation lookup
         const collatedSources = CompendiumBrowser.collateSources();
         context.sources = [];
@@ -444,7 +453,13 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         for (const filter of filters) {
             if (filter.type === "boolean") {
                 const el = html.querySelector(`input[name="additional.${filter.key}"]`);
-                filter.value = el?.checked || false;
+                // 3-state filter (notValue support): read hidden input value (0/1/-1)
+                if (filter.config?.notValue !== undefined) {
+                    const val = parseInt(el?.value || "0", 10);
+                    filter.value = val || 0;
+                } else {
+                    filter.value = el?.checked || false;
+                }
             } else if (filter.type === "range") {
                 const minEl = html.querySelector(`input[name="additional.${filter.key}.min"]`);
                 const maxEl = html.querySelector(`input[name="additional.${filter.key}.max"]`);

@@ -406,9 +406,12 @@ export function applyFilter(entry, filter) {
 
     switch (filter.type) {
         case "boolean": {
-            // hasSpellcasting pattern: true when value is NOT the config.notValue
+            // hasSpellcasting 3-state pattern: 0=off 1=include(spellcasting) -1=exclude(spellcasting)
             if (filter.config?.notValue !== undefined) {
-                return rawValue !== filter.config.notValue && rawValue !== null;
+                const val = filter.value || 0;
+                if (val === 0) return true;                        // filter off — pass all
+                const has = rawValue !== filter.config.notValue && rawValue !== null;
+                return val === 1 ? has : !has;                    // 1=include, -1=exclude
             }
             // true if the value is truthy / non-empty string
             if (transform === "boolean") {

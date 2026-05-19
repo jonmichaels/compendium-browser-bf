@@ -516,7 +516,8 @@
 .compendium-browser .results .item-detail.item-source {
   font-size: var(--font-size-11);
   color: var(--color-text-secondary);
-  text-align: right;
+  text-align: center;
+  flex: 0 0 100px;
   white-space: nowrap;
 }
 

@@ -27,6 +27,17 @@
 
     <!-- Filters -->
     <div class="flexcol">
+        {{#if hasSpellcastingFilter}}
+        <div class="filter filter-boolean" data-filter-id="hasSpellcasting">
+            <div class="filter-choice">
+                <label>
+                    <span class="filter-state" data-key="additional.hasSpellcasting" data-value="0"></span>
+                    <input type="hidden" name="additional.hasSpellcasting" value="0">
+                    <span>Has Spellcasting</span>
+                </label>
+            </div>
+        </div>
+        {{/if}}
         {{#if sources.length}}
         <div class="filter filter-set" data-filter-id="pack">
             <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">SOURCE</span><i class="fa-solid fa-caret-down" inert></i></label></div>
