@@ -66,22 +66,15 @@ const ITEM_FILTERS = {
     ]),
 
     /* ----- Weapons ----- */
-    weapon: new Map([
-        ["properties", {
-            label: "compendium-browser-bf.Filters.Properties",
-            type: "set",
-            keyPath: "system.properties",
-            config: { con: "weaponProperties" },  // NOTE: plain array, not .localized object
-        }],
-    ]),
+    weapon: new Map([]),
 
     /* ----- Gear ----- */
     gear: new Map([
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+        ["attunement", {
+            label: "compendium-browser-bf.Filters.Attunement",
+            type: "boolean",
+            keyPath: "system.attunement.value",
+            transform: "boolean",
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -90,21 +83,21 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
-        ["attunement", {
-            label: "compendium-browser-bf.Filters.Attunement",
-            type: "boolean",
-            keyPath: "system.attunement.value",
-            transform: "boolean",
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", blank: "No Rarity" },
         }],
     ]),
 
     /* ----- Armor ----- */
     armor: new Map([
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+        ["attunement", {
+            label: "compendium-browser-bf.Filters.Attunement",
+            type: "boolean",
+            keyPath: "system.attunement.value",
+            transform: "boolean",
         }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
@@ -113,68 +106,68 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
-        ["attunement", {
-            label: "compendium-browser-bf.Filters.Attunement",
-            type: "boolean",
-            keyPath: "system.attunement.value",
-            transform: "boolean",
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", blank: "No Rarity" },
         }],
     ]),
 
     /* ----- Tools ----- */
     tool: new Map([
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
-        }],
-        ["price", {
-            label: "compendium-browser-bf.Filters.Price",
-            type: "range",
-            keyPath: "system.price.value",
-            config: { min: 0, max: 100000 },
-            transform: "number",
-        }],
         ["attunement", {
             label: "compendium-browser-bf.Filters.Attunement",
             type: "boolean",
             keyPath: "system.attunement.value",
             transform: "boolean",
         }],
-    ]),
-
-    /* ----- Containers ----- */
-    container: new Map([
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
-        }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
             type: "range",
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
+        }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", blank: "No Rarity" },
+        }],
+    ]),
+
+    /* ----- Containers ----- */
+    container: new Map([
+        ["price", {
+            label: "compendium-browser-bf.Filters.Price",
+            type: "range",
+            keyPath: "system.price.value",
+            config: { min: 0, max: 100000 },
+            transform: "number",
+        }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", blank: "No Rarity" },
         }],
     ]),
 
     /* ----- Sundry ----- */
     sundry: new Map([
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
-        }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
             type: "range",
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
+        }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", blank: "No Rarity" },
         }],
     ]),
 
@@ -191,17 +184,17 @@ const ITEM_FILTERS = {
 
     /* ----- Consumables ----- */
     consumable: new Map([
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
-        }],
         ["attunement", {
             label: "compendium-browser-bf.Filters.Attunement",
             type: "boolean",
             keyPath: "system.attunement.value",
             transform: "boolean",
+        }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", blank: "No Rarity" },
         }],
     ]),
 
