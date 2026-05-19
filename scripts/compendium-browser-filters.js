@@ -397,10 +397,6 @@ function resolveAll(filterMap) {
  */
 export function applyFilter(entry, filter) {
     const rawValue = foundry.utils.getProperty(entry, filter._keyPath);
-    if (rawValue === undefined || rawValue === null) {
-        // If the entry doesn't have this path, skip the filter (pass)
-        return true;
-    }
 
     const transform = filter._transform;
 
@@ -410,9 +406,12 @@ export function applyFilter(entry, filter) {
             if (filter.config?.notValue !== undefined) {
                 const val = filter.value || 0;
                 if (val === 0) return true;                        // filter off — pass all
-                const has = rawValue !== filter.config.notValue && rawValue !== null;
+                const has = rawValue !== null && rawValue !== undefined
+                    && rawValue !== "" && rawValue !== filter.config.notValue;
                 return val === 1 ? has : !has;                    // 1=include, -1=exclude
             }
+            // For regular boolean filters, undefined/null = no value = pass
+            if (rawValue === undefined || rawValue === null) return true;
             // true if the value is truthy / non-empty string
             if (transform === "boolean") {
                 return !!rawValue && rawValue !== "";
@@ -421,6 +420,7 @@ export function applyFilter(entry, filter) {
         }
 
         case "range": {
+            if (rawValue === undefined || rawValue === null) return true;
             let num = transform === "number" ? Number(rawValue) : rawValue;
             if (isNaN(num)) return true;  // can't compare, pass
             const val = filter.value || {};
@@ -430,6 +430,7 @@ export function applyFilter(entry, filter) {
         }
 
         case "set": {
+            if (rawValue === undefined || rawValue === null) return true;
             if (!filter.value) return true;  // nothing selected, pass all
 
             // Separate includes (value=1) and excludes (value=-1)
