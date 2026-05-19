@@ -45,16 +45,16 @@
             </div>
         </div>
         {{/if}}
-        {{#if propertiesFilter}}
-        <div class="filter filter-set" data-filter-id="properties">
-            <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">PROPERTIES</span><i class="fa-solid fa-caret-down" inert></i></label></div>
+        {{#if categoryFilter}}
+        <div class="filter filter-set" data-filter-id="category">
+            <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">CATEGORY</span><i class="fa-solid fa-caret-down" inert></i></label></div>
             <div class="collapsible-content">
                 <div class="wrapper">
-                    {{#each propertiesFilter.config.choices}}
+                    {{#each categoryFilter.config.choices}}
                     <div class="filter-choice">
                         <label>
-                            <span class="filter-state" data-key="additional.properties.{{ @key }}" data-value="0"></span>
-                            <input type="hidden" name="additional.properties.{{ @key }}" value="0">
+                            <span class="filter-state" data-key="additional.category.{{ @key }}" data-value="0"></span>
+                            <input type="hidden" name="additional.category.{{ @key }}" value="0">
                             <span>{{ this }}</span>
                         </label>
                     </div>
