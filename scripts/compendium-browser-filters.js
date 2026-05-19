@@ -493,9 +493,15 @@ export function applyFilter(entry, filter) {
             let hasIncludes = false;
             let hasExcludes = false;
             for (const [key, val] of Object.entries(filter.value)) {
-                if (key === "_blank") continue;  // handled separately
+                if (key === "_blank" || key === "mundane") continue;  // handled via _blank mapping
                 if (val === 1) { includes[key] = true; hasIncludes = true; }
                 else if (val === -1) { excludes[key] = true; hasExcludes = true; }
+            }
+
+            // Map "mundane" key to _blank — Black Flag stores mundane items
+            // with an empty/null rarity; "Mundane" is just a display label.
+            if (filter.value.mundane !== undefined && filter.value._blank === undefined) {
+                filter.value._blank = filter.value.mundane;
             }
 
             // Handle _blank (empty value)
