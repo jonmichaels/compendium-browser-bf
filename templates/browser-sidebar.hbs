@@ -1,17 +1,14 @@
 <div>
     <!-- Search -->
-    <div>
+    <div class="search-wrapper">
         <search>
-            <input type="text" name="name" placeholder="{{ localize 'compendium-browser-bf.Tabs.AllItems' }}..."
+            <i class="fa-solid fa-magnifying-glass search-icon" inert></i>
+            <input type="text" name="name" placeholder="{{ localize 'compendium-browser-bf.SearchResults' }}"
                    value="{{ name }}">
-            <ul class="unlist controls">
-                <li>
-                    <button type="button" class="unbutton filter-control" data-action="clearName"
-                            data-tooltip aria-label="Clear Search">
-                        <i class="fa-solid fa-xmark" inert></i>
-                    </button>
-                </li>
-            </ul>
+            <button type="button" class="unbutton search-clear" data-action="clearName"
+                    data-tooltip aria-label="Clear Search">
+                <i class="fa-solid fa-xmark" inert></i>
+            </button>
         </search>
     </div>
 

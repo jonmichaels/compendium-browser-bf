@@ -72,13 +72,13 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static SEARCH_DELAY = 100;
 
     static PACK_SOURCE_ABBREV = {
-        "black-flag": "BF SRD",
-        "kp-tov-players-guide": "ToV PG",
-        "kp-tov-game-masters-guide": "ToV GMG",
-        "kp-tov-monster-vault": "ToV MV",
-        "kp-tov-labyrinth-worldbook": "ToV LW",
-        "kp-tov-labyrinth-adventures": "ToV LA",
-        "kp-tov-dungeons-ruins": "ToV DR",
+        "black-flag": "Black Flag Reference Document",
+        "kp-tov-players-guide": "ToV Player\u2019s Guide",
+        "kp-tov-game-masters-guide": "ToV Game Master\u2019s Guide",
+        "kp-tov-monster-vault": "ToV Monster Vault",
+        "kp-tov-labyrinth-worldbook": "ToV Labyrinth Worldbook",
+        "kp-tov-labyrinth-adventures": "ToV Labyrinth Adventures",
+        "kp-tov-dungeons-ruins": "ToV Dungeons & Ruins",
     };
 
     /* -------------------------------------------- */
@@ -690,19 +690,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                         data-tooltip aria-label="${game.i18n.localize("compendium-browser-bf.ConfigureSources")}"></button>
             `);
         }
-        // Inject the Advanced toggle on the LEFT side of the window header (before the title)
-        if (!this.#filtersLocked) {
-            const title = frame.querySelector('.window-title');
-            if (title) {
-                title.insertAdjacentHTML('beforebegin', `
-                    <label class="switch mode-toggle" style="display:inline-flex;align-items:center;gap:6px">
-                        <input type="checkbox" data-action="toggleMode" ${this.#mode === CompendiumBrowser.MODES.ADVANCED ? 'checked' : ''}>
-                        <span class="slider"></span>
-                        <span class="mode-label" style="font-size:var(--font-size-11);white-space:nowrap">Advanced</span>
-                    </label>
-                `);
-            }
-        }
+        // Advanced toggle hidden per user request
+        // (injection removed to match dnd5e look)
         return frame;
     }
 
