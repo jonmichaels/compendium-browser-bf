@@ -51,9 +51,10 @@
 /* ---- Tab Rail (icon-only, narrow) ---- */
 .compendium-browser .window-content .tabs {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
+  flex-flow: column nowrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
   padding-top: 8px;
   background: var(--color-bg-option, #1a1a2e);
   border-right: 1px solid var(--color-border-dark-primary);
@@ -65,8 +66,10 @@
 .compendium-browser .window-content .tabs nav {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0 !important;
   width: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .compendium-browser .window-content .tabs:empty {
@@ -98,7 +101,7 @@
   display: flex !important;
 }
 
-.compendium-browser .window-content .tabs > .item i {
+.compendium-browser .window-content .tabs nav .item i {
   font-size: var(--font-size-14);
   margin: 0;
 }
