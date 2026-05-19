@@ -459,14 +459,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             specialFilters.push(classFilter);
         }
 
-        // Lineages tab: darkvision filter — single 3-state choice
-        const darkvisionFilter = context.additional.find(f => f.key === "darkvision");
-        if (darkvisionFilter) {
-            darkvisionFilter.config.choices = { "darkvision": "Has Darkvision" };
-            context.darkvisionFilter = darkvisionFilter;
-            specialFilters.push(darkvisionFilter);
-        }
-
         if (specialFilters.length > 0) {
             context.additional = context.additional.filter(f => !specialFilters.includes(f));
             this.#cachedFilterDefs = [...specialFilters, ...context.additional];

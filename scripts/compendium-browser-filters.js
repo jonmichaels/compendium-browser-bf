@@ -227,20 +227,8 @@ const ITEM_FILTERS = {
         }],
     ]),
 
-    // lineage — darkvision filter (trait advancement grants "darkvision" key)
-    lineage: new Map([
-        ["darkvision", {
-            label: "Has Darkvision",
-            type: "set",
-            _documentCheck: docCheckFilter(doc => {
-                return doc.system.advancement
-                    .byType("trait")
-                    .some(a => a.configuration.grants?.has("darkvision"));
-            }),
-        }],
-    ]),
-
-    // subclass — class filter (which class the subclass belongs to)
+    // lineage, heritage, background — no extra filters (darkvision filter researched 2026-05-19,
+    // saved to ~/Documents/jon_vault/research/2026-05-19_darkvision-filter-compendium-browser.md)
     // Black Flag stores parent class at system.identifier.class on the full document,
     // which is NOT in the compendium index (only system.container is indexed).
     // Use _documentCheck to load full subclass documents for filtering.
