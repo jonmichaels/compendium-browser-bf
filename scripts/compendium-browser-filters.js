@@ -52,13 +52,13 @@ const ITEM_FILTERS = {
             config: { con: "spellSchools" },
         }],
         ["source", {
-            label: "BF.SPELL.FIELDS.source.label",  // Black Flag's own i18n
+            label: "compendium-browser-bf.Filters.MagicSource",
             type: "set",
             keyPath: "system.source",
             config: { con: "spellSources" },
         }],
         ["tags", {
-            label: "BF.SPELL.FIELDS.tags.label",
+            label: "compendium-browser-bf.Filters.Tags",
             type: "set",
             keyPath: "system.tags",
             config: { con: "spellTags" },

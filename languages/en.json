@@ -23,8 +23,10 @@
     },
     "Filters": {
       "Source": "Source",
-      "Level": "Level",
+      "Level": "Circle",
       "School": "School",
+      "MagicSource": "Magic Source",
+      "Tags": "Tags",
       "Category": "Category",
       "Properties": "Properties",
       "Attunement": "Attunement",
