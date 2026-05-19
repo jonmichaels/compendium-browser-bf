@@ -153,16 +153,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     /** @override */
     _onChangeForm(formConfig, event) {
         super._onChangeForm(formConfig, event);
-    }
-
-    /** @override — handles checkbox clicks directly (more reliable than _onChangeForm for native inputs) */
-    _onClickAction(event, target) {
-        super._onClickAction(event, target);
-        const checkbox = target.closest("input[data-type]");
-        if (!checkbox) return;
-        // Native checkbox toggles checked AFTER the click event.
-        // Use setTimeout to read the post-toggle state.
-        setTimeout(() => this._onToggleSource(checkbox), 0);
+        // Checkbox changes handled by direct listener in _attachFrameListeners
     }
 
     _onToggleSource(target) {
@@ -253,6 +244,14 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     _attachFrameListeners() {
         super._attachFrameListeners();
         this.element.addEventListener("keydown", this._debouncedFilter, { passive: true });
+        // Direct change listener — ApplicationV2 may not fire _onChangeForm for
+        // native checkboxes. Delegate from the form element (present across renders).
+        if (!this._hasCheckboxListener) {
+            this._hasCheckboxListener = true;
+            this.element.addEventListener("change", (event) => {
+                if (event.target.matches("input[data-type]")) this._onToggleSource(event.target);
+            });
+        }
     }
 
     /** @override */
