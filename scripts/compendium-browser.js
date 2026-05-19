@@ -141,6 +141,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /** @type {Array<object>|null} — cached filter definitions for DOM value reading */
     #cachedFilterDefs = null;
     #pendingFilterValues = null;
+    #searchTimeout = null;
 
     /* -------------------------------------------- */
     /*  Static Methods                              */
@@ -816,15 +817,13 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Mode toggle + Configure Sources are handled by ApplicationV2 actions
         // (registered in DEFAULT_OPTIONS.actions — no manual listeners needed)
 
-        // Search input (debounced) — uses a stable container
-        const searchInput = html.querySelector("input[name='name']");
-        if (searchInput) {
-            let timeout;
-            searchInput.addEventListener("input", (event) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => this.#onSearch(event), CompendiumBrowser.SEARCH_DELAY);
-            });
-        }
+        // Search input (debounced) — use event delegation on the persistent
+        // html element so the listener survives sidebar re-renders on tab switch.
+        html.addEventListener("input", (event) => {
+            if (event.target.name !== "name") return;
+            clearTimeout(this.#searchTimeout);
+            this.#searchTimeout = setTimeout(() => this.#onSearch(event), CompendiumBrowser.SEARCH_DELAY);
+        });
 
         // All sidebar interactions use event delegation on the persistent app element,
         // so they survive partial re-renders of the sidebar part.
