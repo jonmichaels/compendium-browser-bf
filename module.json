@@ -2,7 +2,7 @@
   "id": "compendium-browser-bf",
   "title": "Compendium Browser \u2014 Black Flag / Tales of the Valiant (ToV)",
   "description": "A compendium browser for Black Flag Roleplaying (Tales of the Valiant). Browse spells, items, monsters, classes, lineages, heritages, talents, and more with rich filtering. Supports multi-select and compendium source configuration. Ported from the dnd5e built-in compendium browser.",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "authors": [
     {
       "name": "hermes90201",

@@ -141,7 +141,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     /** @type {Array<object>|null} — cached filter definitions for DOM value reading */
     #cachedFilterDefs = null;
     #pendingFilterValues = null;
-    #mundaneFilterState = 0;  // 0=off, 1=include, -1=exclude — bypasses DOM reads
 
     /* -------------------------------------------- */
     /*  Static Methods                              */
@@ -444,7 +443,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             label: typeKey.charAt(0).toUpperCase() + typeKey.slice(1),
             chosen: i === 0,
         }));
-        context.showTypes = types.length > 1;
+        context.showTypes = types.length > 1 && def.tab !== "items";
 
         // Filters
         const typeSet = def.types ? new Set(def.types) : null;
@@ -588,15 +587,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Otherwise read from the current DOM (e.g. initial render).
         const filters = this.#pendingFilterValues || this.#readFilterValues();
         this.#pendingFilterValues = null;
-
-        // Special case: inject Mundane state directly (bypasses DOM read/render issues)
-        if (this.#mundaneFilterState !== 0) {
-            const rarityFilter = filters.find(f => f.key === "rarity");
-            if (rarityFilter) {
-                rarityFilter.value = rarityFilter.value || {};
-                rarityFilter.value.mundane = this.#mundaneFilterState;
-            }
-        }
 
         // Kick off the async fetch — results rendered later via #renderResults
         this.#allResults = [];
@@ -944,7 +934,6 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         super.changeTab(tab, group, options);
         this.#activeTab = tab;
         this.#searchName = "";
-        this.#mundaneFilterState = 0;  // reset special case on tab switch
         this.render({ parts: ["tabs", "sidebar", "results"] });
     }
 
@@ -1017,13 +1006,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         stateEl.dataset.value = value;
         // Update the associated hidden input for form/reading
         const input = stateEl.parentElement?.querySelector("input[name]");
-        if (input) {
-            input.value = value;
-            // Special case: Mundane — store directly to bypass DOM read/ApplicationV2 render issues
-            if (input.name === "additional.rarity.mundane") {
-                this.#mundaneFilterState = value;
-            }
-        }
+        if (input) input.value = value;
         this.#onFilterChange();
     }
 

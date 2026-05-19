@@ -70,70 +70,34 @@ const ITEM_FILTERS = {
 
     /* ----- Gear ----- */
     gear: new Map([
-        ["attunement", {
-            label: "compendium-browser-bf.Filters.Attunement",
-            type: "boolean",
-            keyPath: "system.attunement.value",
-            transform: "boolean",
-        }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
             type: "range",
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
-        }],
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities", prepend: { mundane: "Mundane" } },
         }],
     ]),
 
     /* ----- Armor ----- */
     armor: new Map([
-        ["attunement", {
-            label: "compendium-browser-bf.Filters.Attunement",
-            type: "boolean",
-            keyPath: "system.attunement.value",
-            transform: "boolean",
-        }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
             type: "range",
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
-        }],
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities" },
         }],
     ]),
 
     /* ----- Tools ----- */
     tool: new Map([
-        ["attunement", {
-            label: "compendium-browser-bf.Filters.Attunement",
-            type: "boolean",
-            keyPath: "system.attunement.value",
-            transform: "boolean",
-        }],
         ["price", {
             label: "compendium-browser-bf.Filters.Price",
             type: "range",
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
-        }],
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities" },
         }],
     ]),
 
@@ -146,12 +110,6 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities" },
-        }],
     ]),
 
     /* ----- Sundry ----- */
@@ -162,12 +120,6 @@ const ITEM_FILTERS = {
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
-        }],
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities" },
         }],
     ]),
 
@@ -183,20 +135,7 @@ const ITEM_FILTERS = {
     ]),
 
     /* ----- Consumables ----- */
-    consumable: new Map([
-        ["attunement", {
-            label: "compendium-browser-bf.Filters.Attunement",
-            type: "boolean",
-            keyPath: "system.attunement.value",
-            transform: "boolean",
-        }],
-        ["rarity", {
-            label: "compendium-browser-bf.Filters.Rarity",
-            type: "set",
-            keyPath: "system.rarity",
-            config: { con: "rarities" },
-        }],
-    ]),
+    consumable: new Map([]),
 
     /* ----- Talents ----- */
     talent: new Map([
