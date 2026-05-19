@@ -253,27 +253,40 @@ const ITEM_FILTERS = {
 /**
  * Actor type → Map<filterKey, FilterDef>
  */
-const ACTOR_FILTERS = new Map([
-    ["cr", {
-        label: "compendium-browser-bf.Filters.CR",
-        type: "range",
-        keyPath: "system.attributes.cr",
-        config: { min: 0, max: 30 },
-        transform: "number",
-    }],
-    ["size", {
-        label: "compendium-browser-bf.Filters.Size",
-        type: "set",
-        keyPath: "system.traits.size",
-        config: { con: "sizes" },
-    }],
-    ["creatureType", {
-        label: "compendium-browser-bf.Filters.CreatureType",
-        type: "set",
-        keyPath: "system.traits.type.value",
-        config: { con: "creatureTypes" },
-    }],
-]);
+const ACTOR_FILTERS = {
+    /* ----- Monsters ----- */
+    npc: new Map([
+        ["cr", {
+            label: "compendium-browser-bf.Filters.CR",
+            type: "range",
+            keyPath: "system.attributes.cr",
+            config: { min: 0, max: 30 },
+            transform: "number",
+        }],
+        ["size", {
+            label: "compendium-browser-bf.Filters.Size",
+            type: "set",
+            keyPath: "system.traits.size",
+            config: { con: "sizes" },
+        }],
+        ["creatureType", {
+            label: "compendium-browser-bf.Filters.CreatureType",
+            type: "set",
+            keyPath: "system.traits.type.value",
+            config: { con: "creatureTypes" },
+        }],
+    ]),
+
+    /* ----- Vehicles ----- */
+    vehicle: new Map([
+        ["size", {
+            label: "compendium-browser-bf.Filters.Size",
+            type: "set",
+            keyPath: "system.traits.size",
+            config: { con: "sizes" },
+        }],
+    ]),
+};
 
 /* ------------------------------------------------------------------ */
 /*  Runtime Resolution                                                */
@@ -364,13 +377,22 @@ export function docCheckFilter(checkFn) {
  * @returns {Array<object>}       — array of resolved filter objects for template rendering
  */
 export function getFilterDefinitions(documentClass, types) {
+    const typeSet = types && types.size > 0 ? types : null;
+
     if (documentClass === "Actor") {
-        return resolveAll(ACTOR_FILTERS);
+        // Merge filters for all matching actor types (same pattern as items)
+        const merged = new Map();
+        for (const [typeKey, filterMap] of Object.entries(ACTOR_FILTERS)) {
+            if (typeSet && !typeSet.has(typeKey)) continue;
+            for (const [key, def] of filterMap) {
+                if (!merged.has(key)) merged.set(key, def);
+            }
+        }
+        return resolveAll(merged);
     }
 
     // Merge filters for all matching item types
     const merged = new Map();
-    const typeSet = types && types.size > 0 ? types : null;
 
     for (const [typeKey, filterMap] of Object.entries(ITEM_FILTERS)) {
         if (typeSet && !typeSet.has(typeKey)) continue;
