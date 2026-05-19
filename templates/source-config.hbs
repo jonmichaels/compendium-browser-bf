@@ -1,46 +1,37 @@
-<div>
-    <h2>{{ packageLabel }}</h2>
-
-    <div class="packs">
-        <section class="packs-section">
-            <h3>Items</h3>
-            <ol class="packs-list">
-                {{#if items.length}}
-                {{#each items}}
-                <li>
-                    <label>
-                        <input type="checkbox" name="pack-{{ id }}" value="true"
-                               {{ checked enabled }}>
-                        <span>{{ label }}</span>
-                    </label>
-                </li>
-                {{/each}}
-                {{else}}
-                <li class="empty">None</li>
-                {{/if}}
-            </ol>
-        </section>
-        <section class="packs-section">
-            <h3>Actors</h3>
-            <ol class="packs-list">
-                {{#if actors.length}}
-                {{#each actors}}
-                <li>
-                    <label>
-                        <input type="checkbox" name="pack-{{ id }}" value="true"
-                               {{ checked enabled }}>
-                        <span>{{ label }}</span>
-                    </label>
-                </li>
-                {{/each}}
-                {{else}}
-                <li class="empty">None</li>
-                {{/if}}
-            </ol>
-        </section>
-    </div>
-
-    <footer class="form-footer">
-        <button type="submit"><i class="fas fa-save"></i> Save</button>
-    </footer>
+<div class="packs">
+    <section class="packs-section">
+        <h3>Items</h3>
+        <ol class="packs-list">
+            {{#each items}}
+            <li>
+                <label>
+                    <input type="checkbox" name="pack-{{ id }}" value="true"
+                           {{ checked enabled }}>
+                    <span>{{ label }}</span>
+                </label>
+            </li>
+            {{else}}
+            <li class="empty">None</li>
+            {{/each}}
+        </ol>
+    </section>
+    <section class="packs-section">
+        <h3>Actors</h3>
+        <ol class="packs-list">
+            {{#each actors}}
+            <li>
+                <label>
+                    <input type="checkbox" name="pack-{{ id }}" value="true"
+                           {{ checked enabled }}>
+                    <span>{{ label }}</span>
+                </label>
+            </li>
+            {{else}}
+            <li class="empty">None</li>
+            {{/each}}
+        </ol>
+    </section>
 </div>
+<footer class="form-footer">
+    <button type="submit"><i class="fas fa-save"></i> Save</button>
+</footer>
