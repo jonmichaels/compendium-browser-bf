@@ -550,6 +550,7 @@
 }
 
 #compendium-browser-bf-source-config .package-list li .checkbox {
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   gap: 4px;
