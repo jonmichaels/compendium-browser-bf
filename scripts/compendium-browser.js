@@ -139,6 +139,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
     /** @type {Array<object>|null} — cached filter definitions for DOM value reading */
     #cachedFilterDefs = null;
+    #pendingFilterValues = null;
 
     /* -------------------------------------------- */
     /*  Static Methods                              */
@@ -581,8 +582,10 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     async _prepareResultsContext(context) {
         const def = this.#activeTabDef;
 
-        // Read current filter values from the DOM sidebar
-        const filters = this.#readFilterValues();
+        // Use snapshotted filter values if available (DOM was destroyed by render).
+        // Otherwise read from the current DOM (e.g. initial render).
+        const filters = this.#pendingFilterValues || this.#readFilterValues();
+        this.#pendingFilterValues = null;
 
         // Kick off the async fetch — results rendered later via #renderResults
         this.#allResults = [];
@@ -982,6 +985,11 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
     /** Re-render results when a filter value changes. */
     #onFilterChange(event) {
+        // Snapshot filter values BEFORE render destroys the sidebar DOM.
+        // ApplicationV2 replaces this.element on render, so the sidebar's
+        // hidden inputs with our just-set filter values are lost unless
+        // we capture them now.
+        this.#pendingFilterValues = this.#readFilterValues();
         this.render({ parts: ["results"] });
     }
 
