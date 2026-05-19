@@ -999,4 +999,11 @@ export function initCompendiumBrowser() {
         });
         html.querySelector(".header-actions")?.append(button);
     });
+
+    // Listen for source configuration changes — re-render any open browser
+    Hooks.on("compendium-browser-bf.sourcesChanged", () => {
+        for (const w of Object.values(ui.windows)) {
+            if (w.id === "compendium-browser-bf") w.render({ force: true });
+        }
+    });
 }

@@ -153,7 +153,8 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     /** @override */
     _onChangeForm(formConfig, event) {
         super._onChangeForm(formConfig, event);
-        if (event.target.dataset.type) this._onToggleSource(event.target);
+        // Toggle handling is done via direct change listener in _onRender
+        // (avoids double-fire from _onChangeForm + addEventListener both firing)
     }
 
     _onToggleSource(target) {
@@ -166,10 +167,8 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const setting = { ...game.settings.get("compendium-browser-bf", "packSourceConfiguration"), ...packs };
         game.settings.set("compendium-browser-bf", "packSourceConfiguration", setting);
 
-        // Refresh any open CompendiumBrowser so the user sees changes immediately
-        for (const w of Object.values(ui.windows)) {
-            if (w.id === "compendium-browser-bf") w.render({ force: true });
-        }
+        // Fire a hook so the CompendiumBrowser can listen and re-fetch
+        Hooks.callAll("compendium-browser-bf.sourcesChanged");
 
         this.render();
     }
@@ -240,6 +239,11 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             const { type, indeterminate } = el.dataset;
             if (indeterminate === "true") el.indeterminate = true;
         }
+        // Backup event listener — guarantees change events are handled even if
+        // ApplicationV2's _onChangeForm doesn't fire for some checkboxes
+        this.element.addEventListener("change", (event) => {
+            if (event.target.dataset.type) this._onToggleSource(event.target);
+        });
     }
 
     /** @override */
