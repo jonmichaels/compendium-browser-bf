@@ -1,9 +1,10 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
- * ApplicationV2 dialog for GM-configurable compendium source selection.
- * Two-pane layout: packages (sidebar) → individual pack toggles (content).
- * Matches dnd5e's Configure Sources layout.
+ * Configure Sources — two-pane dialog matching dnd5e's layout.
+ * Left: package list (World, System, modules).
+ * Right: Items column + Actors column for the selected package.
+ * All checkboxes default to checked (enabled).
  */
 export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -15,7 +16,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             minimizable: false,
             resizable: true,
         },
-        position: { width: 600, height: 500 },
+        position: { width: 700, height: 550 },
         actions: {
             selectPackage: SourceConfig.#onSelectPackage,
         },
@@ -34,79 +35,66 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         content: {
             id: "content",
             template: "modules/compendium-browser-bf/templates/source-config.hbs",
+            scrollable: [".packs"],
         },
     };
 
-    /* -------------------------------------------- */
-
-    /** @type {string|null} — currently selected package ID */
+    /** @type {string} */
     #selectedPackage = null;
 
-    /* -------------------------------------------- */
-
-    /**
-     * Group compendium packs by package (World, System, then modules).
-     */
     async _prepareContext(options) {
         const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
 
-        // Collect all packs grouped by packageName
-        const packageMap = new Map();
-
+        // Group packs by packageName
+        const pkgMap = new Map();
         for (const pack of game.packs) {
-            const pkgName = pack.metadata.packageName || "World";
-            if (!packageMap.has(pkgName)) {
-                packageMap.set(pkgName, {
-                    id: pkgName,
-                    label: pkgName === "World" ? "World" : pack.metadata.packageName,
-                    packs: [],
+            const pn = pack.metadata.packageName || "World";
+            if (!pkgMap.has(pn)) {
+                pkgMap.set(pn, {
+                    id: pn,
+                    label: pn,
+                    items: [],
+                    actors: [],
                 });
             }
-            packageMap.get(pkgName).packs.push({
+            const entry = {
                 id: pack.metadata.id,
                 label: pack.metadata.label,
-                type: pack.metadata.type,
                 enabled: config[pack.metadata.id] !== false,
-            });
+            };
+            const pkg = pkgMap.get(pn);
+            if (pack.metadata.type === "Item") pkg.items.push(entry);
+            else if (pack.metadata.type === "Actor") pkg.actors.push(entry);
         }
 
-        // Build sorted package list: World, System (black-flag), then modules alphabetically
+        // Build sorted package list
+        const sysId = game.system.id;
         const packages = [];
-        for (const [pkgName, pkg] of packageMap) {
-            // Sort packs within each package
-            pkg.packs.sort((a, b) => a.label.localeCompare(b.label));
-            pkg.count = pkg.packs.length;
+        for (const [pn, pkg] of pkgMap) {
+            pkg.items.sort((a, b) => a.label.localeCompare(b.label));
+            pkg.actors.sort((a, b) => a.label.localeCompare(b.label));
+            pkg.count = pkg.items.length + pkg.actors.length;
 
-            // Resolve display label
-            if (pkgName === "World") {
+            if (pn === "World") {
                 pkg.label = "World";
+            } else if (pn === sysId) {
+                pkg.label = game.system.title || "System";
             } else {
-                // Try to find the module/system metadata for a nicer label
-                const mod = game.modules.get(pkgName);
-                if (mod) {
-                    pkg.label = mod.title || pkgName;
-                } else {
-                    const sys = game.system;
-                    if (sys.id === pkgName) {
-                        pkg.label = sys.title || "System";
-                    }
-                }
+                const mod = game.modules.get(pn);
+                pkg.label = mod?.title || pn;
             }
-
             packages.push(pkg);
         }
 
-        // Sort: World, System, then modules alphabetically
-        const systemId = game.system.id;
+        // Sort: World → System → modules alphabetically
         packages.sort((a, b) => {
             if (a.id === "World") return -1;
             if (b.id === "World") return 1;
-            if (a.id === systemId) return -1;
-            if (b.id === systemId) return 1;
+            if (a.id === sysId) return -1;
+            if (b.id === sysId) return 1;
             return a.label.localeCompare(b.label);
         });
 
-        // Select first package by default
         if (!this.#selectedPackage && packages.length > 0) {
             this.#selectedPackage = packages[0].id;
         }
@@ -120,31 +108,16 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
                 ...p,
                 active: p.id === this.#selectedPackage,
             }));
-            return context;
         }
         if (partId === "content") {
-            const pkg = context.packages.find(p => p.id === this.#selectedPackage);
-            if (pkg) {
-                const items = pkg.packs.filter(p => p.type === "Item").sort((a, b) => a.label.localeCompare(b.label));
-                const actors = pkg.packs.filter(p => p.type === "Actor").sort((a, b) => a.label.localeCompare(b.label));
-                context.selectedPackage = {
-                    label: pkg.label,
-                    items,
-                    actors,
-                };
-            } else {
-                context.selectedPackage = null;
-            }
-            return context;
+            const pkg = context.packages.find(p => p.id === this.#selectedPackage) || {};
+            context.items = pkg.items || [];
+            context.actors = pkg.actors || [];
+            context.packageLabel = pkg.label || "";
         }
         return context;
     }
 
-    /* -------------------------------------------- */
-
-    /**
-     * Handle package selection in the sidebar.
-     */
     static #onSelectPackage(event, target) {
         const li = target.closest("[data-package]");
         if (!li) return;
@@ -152,9 +125,6 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    /**
-     * Save pack source configuration.
-     */
     static #onSubmit(event, form, formData) {
         const config = {};
         for (const [key, value] of formData.entries()) {

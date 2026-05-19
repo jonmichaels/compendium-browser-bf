@@ -1,10 +1,12 @@
 <div>
-    {{#if selectedPackage}}
+    <h2>{{ packageLabel }}</h2>
+
     <div class="packs">
         <section class="packs-section">
             <h3>Items</h3>
             <ol class="packs-list">
-                {{#each selectedPackage.items}}
+                {{#if items.length}}
+                {{#each items}}
                 <li>
                     <label>
                         <input type="checkbox" name="pack-{{ id }}" value="true"
@@ -13,12 +15,16 @@
                     </label>
                 </li>
                 {{/each}}
+                {{else}}
+                <li class="empty">None</li>
+                {{/if}}
             </ol>
         </section>
         <section class="packs-section">
             <h3>Actors</h3>
             <ol class="packs-list">
-                {{#each selectedPackage.actors}}
+                {{#if actors.length}}
+                {{#each actors}}
                 <li>
                     <label>
                         <input type="checkbox" name="pack-{{ id }}" value="true"
@@ -27,12 +33,12 @@
                     </label>
                 </li>
                 {{/each}}
+                {{else}}
+                <li class="empty">None</li>
+                {{/if}}
             </ol>
         </section>
     </div>
-    {{else}}
-    <p class="notes">Select a package from the sidebar to configure its packs.</p>
-    {{/if}}
 
     <footer class="form-footer">
         <button type="submit"><i class="fas fa-save"></i> Save</button>
