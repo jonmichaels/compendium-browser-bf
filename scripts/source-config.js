@@ -145,7 +145,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     /**
      * Handle package selection in the sidebar.
      */
-    #onSelectPackage(event, target) {
+    static #onSelectPackage(event, target) {
         const li = target.closest("[data-package]");
         if (!li) return;
         this.#selectedPackage = li.dataset.package;
