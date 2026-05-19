@@ -227,37 +227,9 @@ const ITEM_FILTERS = {
         }],
     ]),
 
-    // class, subclass — spellcasting filter
-    // Black Flag stores spellcasting in system.advancement entries (type: "Spellcasting"),
-    // which are NOT in the compendium index. Use _documentCheck to load full documents.
-    class: new Map([
-        ["hasSpellcasting", {
-            label: "Has Spellcasting",
-            type: "boolean",
-            config: { notValue: "none" },
-            _documentCheck(doc) {
-                const adv = doc.system?.advancement;
-                if (!Array.isArray(adv)) return false;
-                const entry = adv.find(e => e?.type === "Spellcasting");
-                const p = entry?.configuration?.progression;
-                return p !== null && p !== undefined && p !== "" && p !== "none";
-            },
-        }],
-    ]),
-    subclass: new Map([
-        ["hasSpellcasting", {
-            label: "Has Spellcasting",
-            type: "boolean",
-            config: { notValue: "none" },
-            _documentCheck(doc) {
-                const adv = doc.system?.advancement;
-                if (!Array.isArray(adv)) return false;
-                const entry = adv.find(e => e?.type === "Spellcasting");
-                const p = entry?.configuration?.progression;
-                return p !== null && p !== undefined && p !== "" && p !== "none";
-            },
-        }],
-    ]),
+    // class, subclass — no extra filters
+    class: new Map(),
+    subclass: new Map(),
 
     // lineage, heritage, background — no extra filters
 };
@@ -395,11 +367,6 @@ function resolveAll(filterMap) {
         resolved._keyPath = def.keyPath || null;
         resolved._transform = def.transform || null;
 
-        // Preserve _documentCheck for filters that need full documents (e.g., BF hasSpellcasting)
-        if (def._documentCheck) {
-            resolved._documentCheck = def._documentCheck;
-        }
-
         result.push(resolved);
     }
     return result;
@@ -420,7 +387,6 @@ export function applyFilter(entry, filter) {
     switch (filter.type) {
         case "boolean": {
             // hasSpellcasting 3-state pattern: 0=off 1=include(spellcasting) -1=exclude(spellcasting)
-            // Note: for Black Flag, _documentCheck is used instead (advancement data not in index)
             if (filter.config?.notValue !== undefined) {
                 const val = filter.value || 0;
                 if (val === 0) return true;                        // filter off — pass all
