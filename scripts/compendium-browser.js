@@ -71,7 +71,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static BATCHING = { MARGIN: 50, SIZE: 50 };
     static SEARCH_DELAY = 100;
 
-    static PACK_SOURCE_ABBREV = {
+    static PACK_SOURCE_NAMES = {
         "black-flag": "Black Flag Reference Document",
         "kp-tov-players-guide": "ToV Player\u2019s Guide",
         "kp-tov-game-masters-guide": "ToV Game Master\u2019s Guide",
@@ -79,6 +79,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         "kp-tov-labyrinth-worldbook": "ToV Labyrinth Worldbook",
         "kp-tov-labyrinth-adventures": "ToV Labyrinth Adventures",
         "kp-tov-dungeons-ruins": "ToV Dungeons & Ruins",
+    };
+
+    static PACK_SOURCE_ABBREV = {
+        "black-flag": "BF SRD",
+        "kp-tov-players-guide": "ToV PG",
+        "kp-tov-game-masters-guide": "ToV GMG",
+        "kp-tov-monster-vault": "ToV MV",
+        "kp-tov-labyrinth-worldbook": "ToV LW",
+        "kp-tov-labyrinth-adventures": "ToV LA",
+        "kp-tov-dungeons-ruins": "ToV DR",
     };
 
     /* -------------------------------------------- */
@@ -404,18 +414,18 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             if (seenModules.has(pkgName)) continue;
             seenModules.add(pkgName);
 
-            // Look up abbreviation by matching pack ID or packageName prefix
-            let abbrev = null;
-            for (const [key, val] of Object.entries(CompendiumBrowser.PACK_SOURCE_ABBREV)) {
+            // Look up full name by matching pack ID or packageName prefix
+            let label = null;
+            for (const [key, val] of Object.entries(CompendiumBrowser.PACK_SOURCE_NAMES)) {
                 if (pack.metadata.id.startsWith(key) || pkgName.startsWith(key)) {
-                    abbrev = val;
+                    label = val;
                     break;
                 }
             }
 
             context.sources.push({
                 key: pkgName,
-                label: abbrev || (pack.metadata.label || pack.metadata.packageName || pack.metadata.id).split(" ").slice(0, 3).join(" "),
+                label: label || (pack.metadata.label || pack.metadata.packageName || pack.metadata.id).split(" ").slice(0, 3).join(" "),
             });
         }
 
