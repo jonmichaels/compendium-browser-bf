@@ -142,6 +142,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     #cachedFilterDefs = null;
     #pendingFilterValues = null;
     #searchTimeout = null;
+    #resultsListenerAttached = null;
 
     /* -------------------------------------------- */
     /*  Static Methods                              */
@@ -878,26 +879,30 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Called on every results re-render (tab switch, filter change, search).
      */
     #attachResults() {
-        const resultsEl = this.element.querySelector(".browser-results");
+        // Attach listeners to the results PART CONTAINER (.results), which
+        // is the scrollable element (overflow-y: auto). The inner .browser-results
+        // section grows with content and never scrolls itself.
+        const resultsEl = this.element.querySelector(".results");
         if (!resultsEl) return;
 
-        // Remove old scroll listener by cloning the node (simple approach)
-        const newEl = resultsEl.cloneNode(true);
-        resultsEl.parentNode.replaceChild(newEl, resultsEl);
+        // ApplicationV2 replaces inner HTML on re-render but the .results
+        // container persists. Only attach listeners once per element reference.
+        if (resultsEl === this.#resultsListenerAttached) return;
+        this.#resultsListenerAttached = resultsEl;
 
         // Scroll listener for lazy batch loading
-        newEl.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
+        resultsEl.addEventListener("scroll", (event) => this.#onScrollResults(event), { passive: true });
 
         // Entry click delegation (only in selection mode)
         if (this.#displaySelection) {
-            newEl.addEventListener("click", (event) => {
+            resultsEl.addEventListener("click", (event) => {
                 const entryEl = event.target.closest("[data-entry-uuid]");
                 if (!entryEl) return;
                 if (event.target.closest("[data-action='openLink']")) return;
                 this.#onClickEntryDelegated(entryEl, event);
             });
 
-            newEl.addEventListener("change", (event) => {
+            resultsEl.addEventListener("change", (event) => {
                 if (event.target.name === "selected") {
                     const entryEl = event.target.closest("[data-entry-uuid]");
                     if (entryEl) this.#onChangeEntryDelegated(entryEl, event.target);
@@ -906,7 +911,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         }
 
         // Entry click to open document
-        newEl.addEventListener("click", (event) => {
+        resultsEl.addEventListener("click", (event) => {
             const openLink = event.target.closest("[data-action='openLink']");
             if (openLink) {
                 const entryEl = openLink.closest("[data-entry-uuid]");
@@ -918,7 +923,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         });
 
         // Kick off async fetch + render
-        this.#renderResults(newEl);
+        this.#renderResults(resultsEl);
     }
 
     /* -------------------------------------------- */
