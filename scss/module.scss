@@ -580,14 +580,14 @@
   scrollbar-gutter: stable;
   padding: 6px 8px 0 4px;
   overflow: hidden auto;
-  gap: 12px;
+  gap: 16px;
   align-items: start;
-  margin-left: 16px;
+  flex: 1;
 }
 
 #compendium-browser-bf-source-config .packs .packs-section {
   flex: 1;
-  max-width: 50%;
+  min-width: 0;
 }
 
 #compendium-browser-bf-source-config .packs .packs-list {
@@ -600,13 +600,18 @@
 }
 
 #compendium-browser-bf-source-config .packs .packs-list li {
-  border-bottom: 1px dotted var(--color-border-dark-primary);
-  padding-bottom: 6px;
+  padding: 1px 0;
 }
 
 #compendium-browser-bf-source-config .packs .packs-list li:last-child {
-  border: none;
   padding: 0;
+}
+
+#compendium-browser-bf-source-config .packs .packs-list .pack-all {
+  border-bottom: 1px solid var(--color-border-dark-primary);
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+  font-weight: bold;
 }
 
 #compendium-browser-bf-source-config .packs .packs-list li label {

@@ -19,6 +19,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             selectPackage: SourceConfig.#onSelectPackage,
             togglePackage: SourceConfig.#onTogglePackage,
             autoSave: SourceConfig.#onAutoSave,
+            toggleAllPacks: SourceConfig.#onToggleAllPacks,
         },
     };
 
@@ -34,43 +35,67 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     async _prepareContext(options) {
         const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
-        const pkgMap = new Map();
         const sysId = game.system.id;
 
+        // Separate packs by packageType (world, system, module) for proper ordering
+        const worldPacks = [];
+        const systemPacks = [];
+        const modulePacks = [];
+
         for (const pack of game.packs) {
-            const pn = pack.metadata.packageName || "World";
-            if (!pkgMap.has(pn)) {
-                pkgMap.set(pn, { id: pn, label: pn, items: [], actors: [], packIds: [] });
-            }
-            const pkg = pkgMap.get(pn);
-            pkg.packIds.push(pack.metadata.id);
-            const entry = {
-                id: pack.metadata.id,
-                label: pack.metadata.label,
-                enabled: config[pack.metadata.id] !== false,
-            };
-            if (pack.metadata.type === "Item") pkg.items.push(entry);
-            else if (pack.metadata.type === "Actor") pkg.actors.push(entry);
+            const pType = pack.metadata.packageType || "module";
+            if (pType === "world") worldPacks.push(pack);
+            else if (pType === "system") systemPacks.push(pack);
+            else modulePacks.push(pack);
         }
 
-        const packages = [];
-        for (const [pn, pkg] of pkgMap) {
+        // Build package data grouped by package name (derived from pack ID prefix)
+        function buildPkg(packs, pkgId, pkgLabel, sortOrder) {
+            const pkg = { id: pkgId, label: pkgLabel, items: [], actors: [], packIds: [], sortOrder };
+            for (const pack of packs) {
+                pkg.packIds.push(pack.metadata.id);
+                const entry = {
+                    id: pack.metadata.id,
+                    label: pack.metadata.label,
+                    enabled: config[pack.metadata.id] !== false,
+                };
+                if (pack.metadata.type === "Item") pkg.items.push(entry);
+                else if (pack.metadata.type === "Actor") pkg.actors.push(entry);
+            }
             pkg.items.sort((a, b) => a.label.localeCompare(b.label));
             pkg.actors.sort((a, b) => a.label.localeCompare(b.label));
             pkg.count = pkg.items.length + pkg.actors.length;
-            if (pn === "World") pkg.label = "World";
-            else if (pn === sysId) pkg.label = game.system.title || "System";
-            else { const mod = game.modules.get(pn); pkg.label = mod?.title || pn; }
-            // Package is "active" (checked) if ALL its packs are enabled
             pkg.active = pkg.items.every(e => e.enabled) && pkg.actors.every(a => a.enabled);
-            packages.push(pkg);
+            return pkg;
         }
 
+        const packages = [];
+
+        // World compendiums (packageType === "world")
+        if (worldPacks.length > 0) {
+            packages.push(buildPkg(worldPacks, "world", "World", 0));
+        }
+
+        // System compendiums (packageType === "system")
+        if (systemPacks.length > 0) {
+            packages.push(buildPkg(systemPacks, sysId, game.system.title || "System", 1));
+        }
+
+        // Module compendiums — group by package name (module ID from pack.metadata.id prefix)
+        const mMap = new Map();
+        for (const pack of modulePacks) {
+            const pn = pack.metadata.id.split(".")[0]; // "module-name.packName" → "module-name"
+            if (!mMap.has(pn)) mMap.set(pn, []);
+            mMap.get(pn).push(pack);
+        }
+        for (const [pn, pks] of mMap) {
+            const mod = game.modules.get(pn);
+            packages.push(buildPkg(pks, pn, mod?.title || pn, 2));
+        }
+
+        // Sort: world (0) → system (1) → modules (2) by label
         packages.sort((a, b) => {
-            if (a.id === "World") return -1;
-            if (b.id === "World") return 1;
-            if (a.id === sysId) return -1;
-            if (b.id === sysId) return 1;
+            if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
             return a.label.localeCompare(b.label);
         });
 
@@ -91,12 +116,19 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         const sel = packages.find(p => p.id === this.#selectedPackage) || {};
 
         return {
-            packages: packages.map(p => ({ ...p, active: p.active })),
-            items: sel.items || [],
-            actors: sel.actors || [],
+            packages: packages.map(p => ({
+                ...p,
+                active: p.active,
+                // All packs in this package are enabled when every pack is enabled
+                allItemsEnabled: p.items.every(e => e.enabled),
+                allActorsEnabled: p.actors.every(a => a.enabled),
+            })),
+            items: (sel.items || []).map(i => ({ ...i })),
+            actors: (sel.actors || []).map(a => ({ ...a })),
         };
     }
 
+    /** Select a package in the sidebar to view its packs. */
     static #onSelectPackage(event, target) {
         const li = target.closest("[data-package]");
         if (!li) return;
@@ -118,6 +150,10 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             config[id] = enabled;
         }
         game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
+
+        // Refresh any open CompendiumBrowser windows so they see the change immediately
+        SourceConfig.#refreshBrowsers();
+
         this.render();
     }
 
@@ -128,6 +164,40 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             config[target.name.slice(5)] = target.checked;
         }
         game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
+
+        // Refresh any open CompendiumBrowser windows
+        SourceConfig.#refreshBrowsers();
+
         this.render();
+    }
+
+    /** Toggle "All" checkbox — cascades to all items or actors in the selected package. */
+    static #onToggleAllPacks(event, target) {
+        const checked = target.checked;
+        const section = target.dataset.section; // "items" or "actors"
+        const pkgId = this.#selectedPackage;
+        const pkg = this.#packageData[pkgId];
+        if (!pkg) return;
+
+        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
+        const packs = section === "items" ? pkg.items : pkg.actors;
+        for (const entry of packs) {
+            config[entry.id] = checked;
+        }
+        game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
+
+        // Refresh any open CompendiumBrowser windows
+        SourceConfig.#refreshBrowsers();
+
+        this.render();
+    }
+
+    /** Find all open CompendiumBrowser instances and tell them to re-fetch. */
+    static #refreshBrowsers() {
+        for (const w of Object.values(ui.windows)) {
+            if (w.constructor.name === "CompendiumBrowser" || w.options?.id === "compendium-browser-bf") {
+                w.render();
+            }
+        }
     }
 }
