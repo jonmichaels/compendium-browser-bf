@@ -466,7 +466,9 @@ export function applyFilter(entry, filter) {
         }
 
         case "set": {
-            if (rawValue === undefined || rawValue === null) return true;
+            // undefined/null rarity means "no rarity" (Mundane).
+            // Don't short-circuit — let the _blank logic handle it.
+            if (rawValue === null) rawValue = undefined;
             if (!filter.value) return true;  // nothing selected, pass all
 
             // Separate includes (value=1) and excludes (value=-1)
