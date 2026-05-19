@@ -67,12 +67,6 @@ const ITEM_FILTERS = {
 
     /* ----- Weapons ----- */
     weapon: new Map([
-        ["weaponType", {
-            label: "BF.WEAPON.FIELDS.type.value.label",
-            type: "set",
-            keyPath: "system.type.value",
-            config: { con: "weaponTypes" },
-        }],
         ["properties", {
             label: "compendium-browser-bf.Filters.Properties",
             type: "set",
@@ -197,12 +191,6 @@ const ITEM_FILTERS = {
 
     /* ----- Consumables ----- */
     consumable: new Map([
-        ["category", {
-            label: "compendium-browser-bf.Filters.Category",
-            type: "set",
-            keyPath: "system.type.category",
-            config: { con: "consumableCategories" },
-        }],
         ["rarity", {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
