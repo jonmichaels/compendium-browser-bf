@@ -484,16 +484,17 @@ export function applyFilter(entry, filter) {
 
             // Map "mundane" key to _blank — Black Flag stores mundane items
             // with an empty/null rarity; "Mundane" is just a display label.
-            if (filter.value.mundane !== undefined && filter.value._blank === undefined) {
-                filter.value._blank = filter.value.mundane;
-                // When including mundane items (_blank=1), set hasIncludes so
-                // non-empty rarities are filtered out by the include check below.
-                if (filter.value.mundane === 1) hasIncludes = true;
-                else if (filter.value.mundane === -1) hasExcludes = true;
+            // Read _blank from the filter value (may come from mundane, _blank
+            // config, or directly). MUTATION-FREE: do NOT set filter.value._blank
+            // or the check on next item will skip this block.
+            let blankVal = filter.value._blank;
+            if (blankVal === undefined && filter.value.mundane !== undefined) {
+                blankVal = filter.value.mundane;
             }
+            if (blankVal === 1) hasIncludes = true;
+            else if (blankVal === -1) hasExcludes = true;
 
             // Handle _blank (empty value)
-            const blankVal = filter.value._blank;
             const isEmpty = !rawValue || rawValue === "" || (Array.isArray(rawValue) && rawValue.length === 0);
 
             // ---- Scalar value ---- //
