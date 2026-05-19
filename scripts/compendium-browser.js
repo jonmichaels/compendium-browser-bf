@@ -269,6 +269,29 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         }, renderOptions);
     }
 
+    /**
+     * Build a { identifier: name } map of all class items in visible compendiums.
+     * Used by the Subclasses tab "Classes" filter.
+     * @returns {Promise<object>}
+     */
+    static async _getClassChoices() {
+        const choices = {};
+        const collatedSources = this.collateSources();
+        for (const pack of game.packs) {
+            if (pack.metadata.type !== "Item") continue;
+            if (!collatedSources.has(pack.metadata.id)) continue;
+            const entries = await pack.getIndex({ fields: ["name", "system.identifier"] });
+            for (const entry of entries) {
+                if (entry.type !== "class") continue;
+                const id = entry["system.identifier"] || entry.system?.identifier;
+                if (id && !choices[id]) {
+                    choices[id] = entry.name;
+                }
+            }
+        }
+        return choices;
+    }
+
     /* -------------------------------------------- */
     /*  Form Handler                                */
     /* -------------------------------------------- */
@@ -401,6 +424,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         const typeSet = def.types ? new Set(def.types) : null;
         context.additional = getFilterDefinitions(def.documentClass, typeSet);
         this.#cachedFilterDefs = context.additional;
+
+        // For Subclasses tab: resolve class choices from compendium class items
+        const classFilter = context.additional.find(f => f.key === "class");
+        if (classFilter) {
+            classFilter.config.choices = await CompendiumBrowser._getClassChoices();
+            // Extract class filter for rendering above Source
+            context.classFilter = classFilter;
+            context.additional = context.additional.filter(f => f.key !== "class");
+            this.#cachedFilterDefs = [classFilter, ...context.additional];
+        }
 
         // Sources — deduplicate by packageName, use abbreviation lookup
         const collatedSources = CompendiumBrowser.collateSources();

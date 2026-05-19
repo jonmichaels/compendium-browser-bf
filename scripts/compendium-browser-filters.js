@@ -227,9 +227,15 @@ const ITEM_FILTERS = {
         }],
     ]),
 
-    // class, subclass — no extra filters
-    class: new Map(),
-    subclass: new Map(),
+    // subclass — class filter (which class the subclass belongs to)
+    subclass: new Map([
+        ["class", {
+            label: "Classes",
+            type: "set",
+            keyPath: "system.classIdentifier",
+            config: { fn: "classIdentifiers" },
+        }],
+    ]),
 
     // lineage, heritage, background — no extra filters
 };
@@ -278,10 +284,10 @@ function resolveChoices(def) {
     const cfg = def.config;
     if (!cfg) return null;
 
-    // Function call (e.g. spellCircles)
-    if (cfg.fn && typeof CONFIG.BlackFlag[cfg.fn] === "function") {
+    // Function call (e.g. spellCircles) or externally-resolved (e.g. classIdentifiers set by _prepareSidebarContext)
+    if (cfg.fn && typeof CONFIG.BlackFlag?.[cfg.fn] === "function") {
         const result = CONFIG.BlackFlag[cfg.fn]();
-        return result;  // { 0: "Cantrip", 1: "1st Level", ... }
+        return result;
     }
 
     // Standard CONFIG key
