@@ -71,15 +71,12 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
         const packages = [];
 
+        // ALWAYS include World and System entries — even if zero packs
         // World compendiums (packageType === "world")
-        if (worldPacks.length > 0) {
-            packages.push(buildPkg(worldPacks, "world", "World", 0));
-        }
+        packages.push(buildPkg(worldPacks, "world", "World", 0));
 
         // System compendiums (packageType === "system")
-        if (systemPacks.length > 0) {
-            packages.push(buildPkg(systemPacks, sysId, game.system.title || "System", 1));
-        }
+        packages.push(buildPkg(systemPacks, sysId, game.system.title || "System", 1));
 
         // Module compendiums — group by package name (module ID from pack.metadata.id prefix)
         const mMap = new Map();
@@ -119,9 +116,8 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             packages: packages.map(p => ({
                 ...p,
                 active: p.active,
-                // All packs in this package are enabled when every pack is enabled
-                allItemsEnabled: p.items.every(e => e.enabled),
-                allActorsEnabled: p.actors.every(a => a.enabled),
+                allItemsEnabled: p.items.length > 0 && p.items.every(e => e.enabled),
+                allActorsEnabled: p.actors.length > 0 && p.actors.every(a => a.enabled),
             })),
             items: (sel.items || []).map(i => ({ ...i })),
             actors: (sel.actors || []).map(a => ({ ...a })),
@@ -192,11 +188,13 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    /** Find all open CompendiumBrowser instances and tell them to re-fetch. */
+    /** Find all open CompendiumBrowser instances and force them to re-fetch. */
     static #refreshBrowsers() {
         for (const w of Object.values(ui.windows)) {
-            if (w.constructor.name === "CompendiumBrowser" || w.options?.id === "compendium-browser-bf") {
-                w.render();
+            if (w.id === "compendium-browser-bf") {
+                // Force full re-render — _prepareResultsContext will call fetch() with
+                // fresh collateSources() which reads the updated settings
+                w.render({ force: true });
             }
         }
     }

@@ -512,7 +512,7 @@
 }
 
 #compendium-browser-bf-source-config .source-sidebar {
-  flex: 0 0 200px;
+  flex: 0 0 240px;
   overflow-y: auto;
   padding: 6px 4px 0 12px;
   scrollbar-gutter: stable;
@@ -559,7 +559,7 @@
 
 #compendium-browser-bf-source-config .package-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   cursor: pointer;
 }
@@ -578,7 +578,7 @@
 #compendium-browser-bf-source-config .packs {
   display: flex;
   scrollbar-gutter: stable;
-  padding: 6px 8px 0 4px;
+  padding: 6px 4px 0 4px;
   overflow: hidden auto;
   gap: 16px;
   align-items: start;
@@ -618,10 +618,9 @@
   font-size: unset;
   height: unset;
   line-height: normal;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
 }
 
-#compendium-browser-bf-source-config .form-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px;
-}
+
