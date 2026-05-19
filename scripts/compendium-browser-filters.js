@@ -77,6 +77,12 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
+        }],
     ]),
 
     /* ----- Armor ----- */
@@ -87,6 +93,12 @@ const ITEM_FILTERS = {
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
+        }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
         }],
     ]),
 
@@ -99,6 +111,12 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
+        }],
     ]),
 
     /* ----- Containers ----- */
@@ -109,6 +127,12 @@ const ITEM_FILTERS = {
             keyPath: "system.price.value",
             config: { min: 0, max: 100000 },
             transform: "number",
+        }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
         }],
     ]),
 
@@ -121,6 +145,12 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
+        }],
     ]),
 
     /* ----- Currency ----- */
@@ -132,10 +162,23 @@ const ITEM_FILTERS = {
             config: { min: 0, max: 100000 },
             transform: "number",
         }],
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
+        }],
     ]),
 
     /* ----- Consumables ----- */
-    consumable: new Map([]),
+    consumable: new Map([
+        ["rarity", {
+            label: "compendium-browser-bf.Filters.Rarity",
+            type: "set",
+            keyPath: "system.rarity",
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
+        }],
+    ]),
 
     /* ----- Talents ----- */
     talent: new Map([
