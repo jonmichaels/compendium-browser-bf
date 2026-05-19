@@ -1000,10 +1000,13 @@ export function initCompendiumBrowser() {
         html.querySelector(".header-actions")?.append(button);
     });
 
-    // Listen for source configuration changes — re-render any open browser
+    // Listen for source configuration changes — close and reopen any open browser
+    // (proven pattern: same as compendium directory button click handler)
     Hooks.on("compendium-browser-bf.sourcesChanged", () => {
-        for (const w of Object.values(ui.windows)) {
-            if (w.id === "compendium-browser-bf") w.render({ force: true });
+        const existing = Object.values(ui.windows).find(w => w.id === "compendium-browser-bf");
+        if (existing) {
+            existing.close();
+            new CompendiumBrowser().render({ force: true });
         }
     });
 }

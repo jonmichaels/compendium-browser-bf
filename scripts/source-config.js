@@ -153,10 +153,10 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     /** @override */
     _onChangeForm(formConfig, event) {
         super._onChangeForm(formConfig, event);
-        // Checkbox changes handled by direct listener in _attachFrameListeners
+        if (event.target.dataset.type) this._onToggleSource(event.target);
     }
 
-    _onToggleSource(target) {
+    async _onToggleSource(target) {
         let packs;
         switch (target.dataset.type) {
             case "pack": packs = this._onTogglePack(target); break;
@@ -164,7 +164,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             default: return;
         }
         const setting = { ...game.settings.get("compendium-browser-bf", "packSourceConfiguration"), ...packs };
-        game.settings.set("compendium-browser-bf", "packSourceConfiguration", setting);
+        await game.settings.set("compendium-browser-bf", "packSourceConfiguration", setting);
 
         // Fire a hook so the CompendiumBrowser can listen and re-fetch
         Hooks.callAll("compendium-browser-bf.sourcesChanged");
@@ -174,9 +174,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _onTogglePack(target) {
         const packs = {};
-        const { name, checked } = target;
-        // Read indeterminate from dataset — native checkbox property is auto-cleared on click
-        const indeterminate = target.dataset.indeterminate === "true";
+        const { name, checked, indeterminate } = target;
         if (name === "all-items" || name === "all-actors") {
             const [, documentType] = name.split("-");
             const pkg = this.#selected === "world"
@@ -197,9 +195,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _onTogglePackage(target) {
         const packs = {};
-        const { name, checked } = target;
-        // Read indeterminate from dataset — native checkbox property is auto-cleared on click
-        const indeterminate = target.dataset.indeterminate === "true";
+        const { name, checked, indeterminate } = target;
         const pkg = name === "world"
             ? game.world
             : name === "system"
@@ -244,14 +240,6 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     _attachFrameListeners() {
         super._attachFrameListeners();
         this.element.addEventListener("keydown", this._debouncedFilter, { passive: true });
-        // Direct change listener — ApplicationV2 may not fire _onChangeForm for
-        // native checkboxes. Delegate from the form element (present across renders).
-        if (!this._hasCheckboxListener) {
-            this._hasCheckboxListener = true;
-            this.element.addEventListener("change", (event) => {
-                if (event.target.matches("input[data-type]")) this._onToggleSource(event.target);
-            });
-        }
     }
 
     /** @override */
