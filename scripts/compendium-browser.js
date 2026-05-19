@@ -181,6 +181,10 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             if (f._keyPath) fieldSet.add(f._keyPath);
         }
 
+        // Separate _documentCheck filters (need full doc loading, e.g., BF hasSpellcasting)
+        const docCheckFilters = filters.filter(f => f._documentCheck);
+        const indexFilters = filters.filter(f => !f._documentCheck);
+
         // Get matching compendium packs
         const packs = game.packs.filter(p => {
             if (p.metadata.type !== documentClass) return false;
@@ -215,8 +219,21 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                     if (hasIncludes && state !== 1) continue; // include-only mode — drop non-included
                 }
 
-                // Custom filters
-                if (filters.length > 0 && !applyAllFilters(entry, filters)) continue;
+                // Index-based custom filters
+                if (indexFilters.length > 0 && !applyAllFilters(entry, indexFilters)) continue;
+
+                // Document-check filters: load full document and evaluate
+                let skip = false;
+                for (const f of docCheckFilters) {
+                    const val = f.value || 0;
+                    if (val === 0) continue;  // filter off — pass all
+                    const uuid = `Compendium.${pack.metadata.id}.${entry._id}`;
+                    const doc = await fromUuid(uuid);
+                    const has = doc && f._documentCheck(doc);
+                    if (val === 1 && !has) { skip = true; break; }      // include mode — must have it
+                    if (val === -1 && has) { skip = true; break; }      // exclude mode — must NOT have it
+                }
+                if (skip) continue;
 
                 results.push({
                     ...entry,

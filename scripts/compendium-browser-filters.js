@@ -227,23 +227,35 @@ const ITEM_FILTERS = {
         }],
     ]),
 
-    // class, subclass — spellcasting filter (BF uses system.advancement, not system.spellcasting.progression)
+    // class, subclass — spellcasting filter
+    // Black Flag stores spellcasting in system.advancement entries (type: "Spellcasting"),
+    // which are NOT in the compendium index. Use _documentCheck to load full documents.
     class: new Map([
         ["hasSpellcasting", {
             label: "Has Spellcasting",
             type: "boolean",
-            keyPath: "system.advancement",
             config: { notValue: "none" },
-            transform: "boolean",
+            _documentCheck(doc) {
+                const adv = doc.system?.advancement;
+                if (!Array.isArray(adv)) return false;
+                const entry = adv.find(e => e?.type === "Spellcasting");
+                const p = entry?.configuration?.progression;
+                return p !== null && p !== undefined && p !== "" && p !== "none";
+            },
         }],
     ]),
     subclass: new Map([
         ["hasSpellcasting", {
             label: "Has Spellcasting",
             type: "boolean",
-            keyPath: "system.advancement",
             config: { notValue: "none" },
-            transform: "boolean",
+            _documentCheck(doc) {
+                const adv = doc.system?.advancement;
+                if (!Array.isArray(adv)) return false;
+                const entry = adv.find(e => e?.type === "Spellcasting");
+                const p = entry?.configuration?.progression;
+                return p !== null && p !== undefined && p !== "" && p !== "none";
+            },
         }],
     ]),
 
@@ -380,8 +392,13 @@ function resolveAll(filterMap) {
         }
 
         // Store the raw def for filtering logic
-        resolved._keyPath = def.keyPath;
+        resolved._keyPath = def.keyPath || null;
         resolved._transform = def.transform || null;
+
+        // Preserve _documentCheck for filters that need full documents (e.g., BF hasSpellcasting)
+        if (def._documentCheck) {
+            resolved._documentCheck = def._documentCheck;
+        }
 
         result.push(resolved);
     }
@@ -403,23 +420,10 @@ export function applyFilter(entry, filter) {
     switch (filter.type) {
         case "boolean": {
             // hasSpellcasting 3-state pattern: 0=off 1=include(spellcasting) -1=exclude(spellcasting)
-            // Supports both scalar keyPath (dnd5e: system.spellcasting.progression)
-            // and array keyPath (Black Flag: system.advancement — check for Spellcasting type entries)
+            // Note: for Black Flag, _documentCheck is used instead (advancement data not in index)
             if (filter.config?.notValue !== undefined) {
                 const val = filter.value || 0;
                 if (val === 0) return true;                        // filter off — pass all
-
-                // Array path: check advancement entries for Spellcasting type
-                if (Array.isArray(rawValue)) {
-                    const spellcastingEntry = rawValue.find(
-                        e => e?.type === "Spellcasting"
-                    );
-                    const progression = spellcastingEntry?.configuration?.progression;
-                    const has = progression !== null && progression !== undefined
-                        && progression !== "" && progression !== filter.config.notValue;
-                    return val === 1 ? has : !has;
-                }
-
                 const has = rawValue !== null && rawValue !== undefined
                     && rawValue !== "" && rawValue !== filter.config.notValue;
                 return val === 1 ? has : !has;                    // 1=include, -1=exclude
