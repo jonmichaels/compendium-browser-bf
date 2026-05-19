@@ -87,7 +87,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+            config: { con: "rarities", prepend: { mundane: "Mundane" } },
         }],
     ]),
 
@@ -110,7 +110,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+            config: { con: "rarities" },
         }],
     ]),
 
@@ -133,7 +133,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+            config: { con: "rarities" },
         }],
     ]),
 
@@ -150,7 +150,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+            config: { con: "rarities" },
         }],
     ]),
 
@@ -167,7 +167,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+            config: { con: "rarities" },
         }],
     ]),
 
@@ -194,7 +194,7 @@ const ITEM_FILTERS = {
             label: "compendium-browser-bf.Filters.Rarity",
             type: "set",
             keyPath: "system.rarity",
-            config: { con: "rarities", blank: "No Rarity" },
+            config: { con: "rarities" },
         }],
     ]),
 
@@ -291,7 +291,7 @@ function resolveChoices(def) {
     // Function call (e.g. spellCircles) or externally-resolved (e.g. classIdentifiers set by _prepareSidebarContext)
     if (cfg.fn && typeof CONFIG.BlackFlag?.[cfg.fn] === "function") {
         const result = CONFIG.BlackFlag[cfg.fn]();
-        return result;
+        return mergePrepend(result, cfg.prepend);
     }
 
     // Standard CONFIG key
@@ -299,23 +299,42 @@ function resolveChoices(def) {
         const con = CONFIG.BlackFlag[cfg.con];
         if (!con) return null;
 
+        let result;
+
         // Has .localized (normal case)
-        if (con.localized) return con.localized;
+        if (con.localized) result = con.localized;
 
         // Plain array (e.g. weaponProperties) — build keyed object
-        if (Array.isArray(con)) {
-            const obj = {};
+        else if (Array.isArray(con)) {
+            result = {};
             for (const val of con) {
-                obj[val] = val;  // Capitalize? Use i18n? For now, the raw string
+                result[val] = val;  // Capitalize? Use i18n? For now, the raw string
             }
-            return obj;
         }
 
         // Plain object — use as-is
-        return con;
+        else result = con;
+
+        return mergePrepend(result, cfg.prepend);
     }
 
     return null;
+}
+
+/**
+ * Merge prepend entries into a choices object, preserving insertion order.
+ * Prepend entries appear first, then the base choices.
+ * Keys in prepend that already exist in base are skipped (prepend wins).
+ */
+function mergePrepend(base, prepend) {
+    if (!prepend) return base;
+    const merged = { ...prepend };
+    if (base) {
+        for (const [k, v] of Object.entries(base)) {
+            if (!(k in merged)) merged[k] = v;
+        }
+    }
+    return merged;
 }
 
 /* ------------------------------------------------------------------ */
@@ -474,13 +493,14 @@ export function applyFilter(entry, filter) {
             let hasIncludes = false;
             let hasExcludes = false;
             for (const [key, val] of Object.entries(filter.value)) {
-                if (key === "_blank") continue;  // handled separately
+                if (key === "_blank" || key === "mundane") continue;  // handled separately
                 if (val === 1) { includes[key] = true; hasIncludes = true; }
                 else if (val === -1) { excludes[key] = true; hasExcludes = true; }
             }
 
-            // Handle _blank (No Rarity / empty value)
-            const blankVal = filter.value._blank;
+            // Handle _blank (No Rarity / empty value) — also "mundane" key
+            let blankVal = filter.value._blank;
+            if (blankVal === undefined) blankVal = filter.value.mundane;
             const isEmpty = !rawValue || rawValue === "" || (Array.isArray(rawValue) && rawValue.length === 0);
 
             // ---- Scalar value ---- //
