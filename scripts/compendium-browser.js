@@ -459,6 +459,18 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             specialFilters.push(classFilter);
         }
 
+        // Talents tab: properties filter — Magic, Martial, Technical talent categories
+        const propertiesFilter = context.additional.find(f => f.key === "properties");
+        if (propertiesFilter) {
+            propertiesFilter.config.choices = {
+                "magic": "Magic Talents",
+                "martial": "Martial Talents",
+                "technical": "Technical Talents",
+            };
+            context.propertiesFilter = propertiesFilter;
+            specialFilters.push(propertiesFilter);
+        }
+
         if (specialFilters.length > 0) {
             context.additional = context.additional.filter(f => !specialFilters.includes(f));
             this.#cachedFilterDefs = [...specialFilters, ...context.additional];

@@ -219,11 +219,10 @@ const ITEM_FILTERS = {
 
     /* ----- Talents ----- */
     talent: new Map([
-        ["category", {
-            label: "compendium-browser-bf.Filters.Category",
+        ["properties", {
+            label: "compendium-browser-bf.Filters.Properties",
             type: "set",
             keyPath: "system.type.category",
-            config: { con: "featureCategories" },
         }],
     ]),
 
