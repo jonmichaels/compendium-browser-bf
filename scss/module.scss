@@ -551,6 +551,28 @@
   border: none;
   padding: 0;
   cursor: pointer;
+  text-align: left;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+#compendium-browser-bf-source-config .package-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+#compendium-browser-bf-source-config .package-row .package {
+  flex: 1;
+}
+
+#compendium-browser-bf-source-config .packs-section h3 {
+  font-size: var(--font-size-14);
+  margin: 0 0 4px 0;
+  border-bottom: 1px solid var(--color-border-dark-primary);
+  padding-bottom: 4px;
 }
 
 #compendium-browser-bf-source-config .packs {
@@ -560,13 +582,7 @@
   overflow: hidden auto;
   gap: 12px;
   align-items: start;
-}
-
-#compendium-browser-bf-source-config .packs-section h3 {
-  font-size: var(--font-size-14);
-  margin: 0 0 4px 0;
-  border-bottom: 1px solid var(--color-border-dark-primary);
-  padding-bottom: 4px;
+  margin-left: 16px;
 }
 
 #compendium-browser-bf-source-config .packs .packs-section {
@@ -577,7 +593,10 @@
 #compendium-browser-bf-source-config .packs .packs-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 #compendium-browser-bf-source-config .packs .packs-list li {

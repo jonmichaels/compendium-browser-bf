@@ -1,9 +1,8 @@
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
 /**
- * Configure Sources — matches dnd5e's 3-column layout using a single template.
- * Layout: [sidebar: Filter + packages] [Items column] [Actors column]
- * All packs default to CHECKED.
+ * Configure Sources — matches dnd5e.
+ * Single template, checkbox toggle per package, auto-save on any change.
  */
 export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
@@ -18,10 +17,8 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         position: { width: 650, height: 500 },
         actions: {
             selectPackage: SourceConfig.#onSelectPackage,
-        },
-        form: {
-            handler: SourceConfig.#onSubmit,
-            closeOnSubmit: true,
+            togglePackage: SourceConfig.#onTogglePackage,
+            autoSave: SourceConfig.#onAutoSave,
         },
     };
 
@@ -33,6 +30,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
     #selectedPackage = null;
+    #packageData = {};
 
     async _prepareContext(options) {
         const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
@@ -42,14 +40,15 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         for (const pack of game.packs) {
             const pn = pack.metadata.packageName || "World";
             if (!pkgMap.has(pn)) {
-                pkgMap.set(pn, { id: pn, label: pn, items: [], actors: [] });
+                pkgMap.set(pn, { id: pn, label: pn, items: [], actors: [], packIds: [] });
             }
+            const pkg = pkgMap.get(pn);
+            pkg.packIds.push(pack.metadata.id);
             const entry = {
                 id: pack.metadata.id,
                 label: pack.metadata.label,
                 enabled: config[pack.metadata.id] !== false,
             };
-            const pkg = pkgMap.get(pn);
             if (pack.metadata.type === "Item") pkg.items.push(entry);
             else if (pack.metadata.type === "Actor") pkg.actors.push(entry);
         }
@@ -62,6 +61,8 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             if (pn === "World") pkg.label = "World";
             else if (pn === sysId) pkg.label = game.system.title || "System";
             else { const mod = game.modules.get(pn); pkg.label = mod?.title || pn; }
+            // Package is "active" (checked) if ALL its packs are enabled
+            pkg.active = pkg.items.every(e => e.enabled) && pkg.actors.every(a => a.enabled);
             packages.push(pkg);
         }
 
@@ -77,10 +78,20 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
             this.#selectedPackage = packages[0].id;
         }
 
+        // Store package data for toggle logic
+        this.#packageData = {};
+        for (const p of packages) {
+            this.#packageData[p.id] = {
+                packIds: p.packIds,
+                items: p.items,
+                actors: p.actors,
+            };
+        }
+
         const sel = packages.find(p => p.id === this.#selectedPackage) || {};
 
         return {
-            packages: packages.map(p => ({ ...p, active: p.id === this.#selectedPackage })),
+            packages: packages.map(p => ({ ...p, active: p.active })),
             items: sel.items || [],
             actors: sel.actors || [],
         };
@@ -93,11 +104,30 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         this.render();
     }
 
-    static #onSubmit(event, form, formData) {
-        const config = {};
-        for (const [key, value] of formData.entries()) {
-            if (key.startsWith("pack-")) config[key.slice(5)] = value === "true";
+    /** Toggle entire package on/off — sets all packs in the package to the checkbox state. */
+    static #onTogglePackage(event, target) {
+        const li = target.closest("[data-package]");
+        if (!li) return;
+        const pkgId = li.dataset.package;
+        const enabled = target.checked;
+        const pkg = this.#packageData[pkgId];
+        if (!pkg) return;
+
+        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
+        for (const id of pkg.packIds) {
+            config[id] = enabled;
         }
         game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
+        this.render();
+    }
+
+    /** Auto-save individual pack checkbox changes. */
+    static #onAutoSave(event, target) {
+        const config = game.settings.get("compendium-browser-bf", "packSourceConfiguration") || {};
+        if (target.name?.startsWith("pack-")) {
+            config[target.name.slice(5)] = target.checked;
+        }
+        game.settings.set("compendium-browser-bf", "packSourceConfiguration", config);
+        this.render();
     }
 }
