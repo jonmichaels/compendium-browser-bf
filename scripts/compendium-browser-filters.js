@@ -227,12 +227,12 @@ const ITEM_FILTERS = {
         }],
     ]),
 
-    // class, subclass — spellcasting filter
+    // class, subclass — spellcasting filter (BF uses system.advancement, not system.spellcasting.progression)
     class: new Map([
         ["hasSpellcasting", {
             label: "Has Spellcasting",
             type: "boolean",
-            keyPath: "system.spellcasting.progression",
+            keyPath: "system.advancement",
             config: { notValue: "none" },
             transform: "boolean",
         }],
@@ -241,7 +241,7 @@ const ITEM_FILTERS = {
         ["hasSpellcasting", {
             label: "Has Spellcasting",
             type: "boolean",
-            keyPath: "system.spellcasting.progression",
+            keyPath: "system.advancement",
             config: { notValue: "none" },
             transform: "boolean",
         }],
@@ -403,9 +403,23 @@ export function applyFilter(entry, filter) {
     switch (filter.type) {
         case "boolean": {
             // hasSpellcasting 3-state pattern: 0=off 1=include(spellcasting) -1=exclude(spellcasting)
+            // Supports both scalar keyPath (dnd5e: system.spellcasting.progression)
+            // and array keyPath (Black Flag: system.advancement — check for Spellcasting type entries)
             if (filter.config?.notValue !== undefined) {
                 const val = filter.value || 0;
                 if (val === 0) return true;                        // filter off — pass all
+
+                // Array path: check advancement entries for Spellcasting type
+                if (Array.isArray(rawValue)) {
+                    const spellcastingEntry = rawValue.find(
+                        e => e?.type === "Spellcasting"
+                    );
+                    const progression = spellcastingEntry?.configuration?.progression;
+                    const has = progression !== null && progression !== undefined
+                        && progression !== "" && progression !== filter.config.notValue;
+                    return val === 1 ? has : !has;
+                }
+
                 const has = rawValue !== null && rawValue !== undefined
                     && rawValue !== "" && rawValue !== filter.config.notValue;
                 return val === 1 ? has : !has;                    // 1=include, -1=exclude
