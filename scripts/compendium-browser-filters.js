@@ -227,7 +227,27 @@ const ITEM_FILTERS = {
         }],
     ]),
 
-    // class, subclass, lineage, heritage, background — no extra filters
+    // class, subclass — spellcasting filter
+    class: new Map([
+        ["hasSpellcasting", {
+            label: "Has Spellcasting",
+            type: "boolean",
+            keyPath: "system.spellcasting.progression",
+            config: { notValue: "none" },
+            transform: "boolean",
+        }],
+    ]),
+    subclass: new Map([
+        ["hasSpellcasting", {
+            label: "Has Spellcasting",
+            type: "boolean",
+            keyPath: "system.spellcasting.progression",
+            config: { notValue: "none" },
+            transform: "boolean",
+        }],
+    ]),
+
+    // lineage, heritage, background — no extra filters
 };
 
 /**
@@ -386,6 +406,10 @@ export function applyFilter(entry, filter) {
 
     switch (filter.type) {
         case "boolean": {
+            // hasSpellcasting pattern: true when value is NOT the config.notValue
+            if (filter.config?.notValue !== undefined) {
+                return rawValue !== filter.config.notValue && rawValue !== null;
+            }
             // true if the value is truthy / non-empty string
             if (transform === "boolean") {
                 return !!rawValue && rawValue !== "";
