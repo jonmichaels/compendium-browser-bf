@@ -227,6 +227,19 @@ const ITEM_FILTERS = {
         }],
     ]),
 
+    // lineage — darkvision filter (trait advancement grants "darkvision" key)
+    lineage: new Map([
+        ["darkvision", {
+            label: "Has Darkvision",
+            type: "set",
+            _documentCheck: docCheckFilter(doc => {
+                return doc.system.advancement
+                    .byType("trait")
+                    .some(a => a.configuration.grants?.has("darkvision"));
+            }),
+        }],
+    ]),
+
     // subclass — class filter (which class the subclass belongs to)
     // Black Flag stores parent class at system.identifier.class on the full document,
     // which is NOT in the compendium index (only system.container is indexed).
@@ -327,6 +340,33 @@ function resolveChoices(def) {
 /* ------------------------------------------------------------------ */
 /*  Public API                                                        */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Create a standard single-choice 3-state _documentCheck handler.
+ *
+ * This encapsulates the common pattern: filterValue has one key whose
+ * value is 0 (off), 1 (include), or -1 (exclude). Pass a checkFn that
+ * returns true if the document possesses the trait.
+ *
+ * Usage:
+ *   _documentCheck: docCheckFilter(doc => doc.system.advancement
+ *       .byType("trait").some(a => a.configuration.grants?.has("darkvision")))
+ *
+ * @param {function} checkFn — (doc) => boolean — true if the doc has the trait
+ * @returns {function} _documentCheck handler
+ */
+export function docCheckFilter(checkFn) {
+    return function(doc, filterValue) {
+        if (!filterValue) return true;
+        const entries = Object.entries(filterValue).filter(([, v]) => v !== 0);
+        if (entries.length === 0) return true;  // no active filter — pass all
+        const [key, state] = entries[0];        // first active key wins
+        const has = checkFn(doc);
+        if (state === 1) return has;            // include: must have
+        if (state === -1) return !has;          // exclude: must NOT have
+        return true;
+    };
+}
 
 /**
  * Get all filter definitions applicable to a document class and its types,

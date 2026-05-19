@@ -448,14 +448,28 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         context.additional = getFilterDefinitions(def.documentClass, typeSet);
         this.#cachedFilterDefs = context.additional;
 
-        // For Subclasses tab: resolve class choices from compendium class items
+        // Extract special single-choice 3-state filters for rendering above Source section
+        const specialFilters = [];
+
+        // Subclasses tab: class filter — resolve choices from compendium class items
         const classFilter = context.additional.find(f => f.key === "class");
         if (classFilter) {
             classFilter.config.choices = await CompendiumBrowser._getClassChoices();
-            // Extract class filter for rendering above Source
             context.classFilter = classFilter;
-            context.additional = context.additional.filter(f => f.key !== "class");
-            this.#cachedFilterDefs = [classFilter, ...context.additional];
+            specialFilters.push(classFilter);
+        }
+
+        // Lineages tab: darkvision filter — single 3-state choice
+        const darkvisionFilter = context.additional.find(f => f.key === "darkvision");
+        if (darkvisionFilter) {
+            darkvisionFilter.config.choices = { "darkvision": "Has Darkvision" };
+            context.darkvisionFilter = darkvisionFilter;
+            specialFilters.push(darkvisionFilter);
+        }
+
+        if (specialFilters.length > 0) {
+            context.additional = context.additional.filter(f => !specialFilters.includes(f));
+            this.#cachedFilterDefs = [...specialFilters, ...context.additional];
         }
 
         // Sources — deduplicate by packageName, use abbreviation lookup

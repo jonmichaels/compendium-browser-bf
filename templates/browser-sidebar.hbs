@@ -27,6 +27,24 @@
 
     <!-- Filters -->
     <div class="flexcol">
+        {{#if darkvisionFilter}}
+        <div class="filter filter-set" data-filter-id="darkvision">
+            <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">HAS DARKVISION</span><i class="fa-solid fa-caret-down" inert></i></label></div>
+            <div class="collapsible-content">
+                <div class="wrapper">
+                    {{#each darkvisionFilter.config.choices}}
+                    <div class="filter-choice">
+                        <label>
+                            <span class="filter-state" data-key="additional.darkvision.{{ @key }}" data-value="0"></span>
+                            <input type="hidden" name="additional.darkvision.{{ @key }}" value="0">
+                            <span>{{ this }}</span>
+                        </label>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        {{/if}}
         {{#if classFilter}}
         <div class="filter filter-set" data-filter-id="class">
             <div class="filter-header"><label data-action="toggleCollapsed"><span class="roboto-upper">CLASSES</span><i class="fa-solid fa-caret-down" inert></i></label></div>
