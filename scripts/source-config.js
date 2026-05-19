@@ -123,7 +123,7 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
         return {
             indeterminate,
             checked: indeterminate || all,
-            showAll: packs.size > 1,
+            showAll: packs.size > 0,
             entries: Array.from(packs.map(id => {
                 const pack = game.packs.get(id);
                 if (!pack) return null;
@@ -176,7 +176,9 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _onTogglePack(target) {
         const packs = {};
-        const { name, checked, indeterminate } = target;
+        const { name, checked } = target;
+        // Read indeterminate from dataset — native checkbox property is auto-cleared on click
+        const indeterminate = target.dataset.indeterminate === "true";
         if (name === "all-items" || name === "all-actors") {
             const [, documentType] = name.split("-");
             const pkg = this.#selected === "world"
@@ -197,7 +199,9 @@ export class SourceConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
     _onTogglePackage(target) {
         const packs = {};
-        const { name, checked, indeterminate } = target;
+        const { name, checked } = target;
+        // Read indeterminate from dataset — native checkbox property is auto-cleared on click
+        const indeterminate = target.dataset.indeterminate === "true";
         const pkg = name === "world"
             ? game.world
             : name === "system"

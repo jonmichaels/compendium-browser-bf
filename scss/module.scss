@@ -498,6 +498,19 @@
    Source Configuration Dialog (dnd5e-style two-part: sidebar + packs)
    ========================================================================== */
 
+#compendium-browser-bf-source-config .window-content {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  padding: 0;
+  overflow: hidden;
+}
+
+#compendium-browser-bf-source-config .window-title {
+  text-align: center;
+  font-size: var(--font-size-20);
+  flex: 1;
+}
+
 #compendium-browser-bf-source-config .sidebar.filter-element {
   padding: 6px 12px 0 4px;
 }
@@ -568,7 +581,8 @@
   display: flex;
   gap: 12px;
   padding: 6px 8px 0 8px;
-  overflow: hidden auto;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 #compendium-browser-bf-source-config .packs-section {
