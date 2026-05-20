@@ -872,6 +872,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 this.close();
             }
         });
+
+        // Drag-and-drop
+        html.addEventListener("dragstart", this._onDragStart.bind(this));
     }
 
     /**
@@ -896,7 +899,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Entry click delegation (only in selection mode)
         if (this.#displaySelection) {
             resultsEl.addEventListener("click", (event) => {
-                const entryEl = event.target.closest("[data-entry-uuid]");
+                const entryEl = event.target.closest("[data-uuid]");
                 if (!entryEl) return;
                 if (event.target.closest("[data-action='openLink']")) return;
                 this.#onClickEntryDelegated(entryEl, event);
@@ -904,7 +907,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
             resultsEl.addEventListener("change", (event) => {
                 if (event.target.name === "selected") {
-                    const entryEl = event.target.closest("[data-entry-uuid]");
+                    const entryEl = event.target.closest("[data-uuid]");
                     if (entryEl) this.#onChangeEntryDelegated(entryEl, event.target);
                 }
             });
@@ -914,9 +917,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         resultsEl.addEventListener("click", (event) => {
             const openLink = event.target.closest("[data-action='openLink']");
             if (openLink) {
-                const entryEl = openLink.closest("[data-entry-uuid]");
+                const entryEl = openLink.closest("[data-uuid]");
                 if (entryEl) {
-                    const uuid = entryEl.dataset.entryUuid;
+                    const uuid = entryEl.dataset.uuid;
                     if (uuid) fromUuid(uuid).then(doc => doc?.sheet?.render(true));
                 }
             }
@@ -977,6 +980,22 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         this.render({ parts: ["sidebar", "results"] });
     }
 
+    /**
+     * Handle dragstart for drag-and-drop from browser to sidebar/world.
+     * Sets text/plain transfer data with document type and UUID.
+     * @param {DragEvent} event  The originating dragstart event.
+     * @protected
+     */
+    _onDragStart(event) {
+        const { uuid } = event.target.closest("[data-uuid]")?.dataset ?? {};
+        try {
+            const { type } = foundry.utils.parseUuid(uuid);
+            event.dataTransfer.setData("text/plain", JSON.stringify({ type, uuid }));
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
     /** Toggle type checkboxes. */
     #onSetType(event) {
         this.render({ parts: ["results"] });
@@ -1018,7 +1037,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     #onClickEntryDelegated(entryEl, event) {
         if (!this.#displaySelection) return;
 
-        const uuid = entryEl.dataset.entryUuid;
+        const uuid = entryEl.dataset.uuid;
         const isShift = event.shiftKey;
 
         if (isShift && this.#lastClickedEntry) {
@@ -1054,7 +1073,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     #onChangeEntryDelegated(entryEl, checkbox) {
         if (!this.#displaySelection) return;
 
-        const uuid = entryEl.dataset.entryUuid;
+        const uuid = entryEl.dataset.uuid;
         if (checkbox.checked) {
             this.#selected.add(uuid);
         } else {
