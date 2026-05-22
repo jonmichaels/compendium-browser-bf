@@ -178,15 +178,15 @@
 
 /* Search input hover glow */
 .compendium-browser .sidebar .search-wrapper input:hover {
-  outline: 2px solid var(--color-border-highlight, #ff6400);
+  outline: 2px solid var(--color-border-highlight);
   outline-offset: -1px;
   border-radius: 2px;
 }
 
 .compendium-browser .sidebar .search-wrapper search:hover,
 .compendium-browser .sidebar .search-wrapper search:focus-within {
-  border-color: var(--color-border-highlight, #ff6400);
-  box-shadow: 0 0 4px var(--color-border-highlight, #ff6400);
+  border-color: var(--color-border-highlight);
+  box-shadow: 0 0 4px var(--color-border-highlight);
 }
 
 .compendium-browser .sidebar .search-icon {
@@ -281,7 +281,7 @@
 .compendium-browser .sidebar .filter-header > label::after {
   content: "";
   flex-basis: 50%;
-  border-top: 1px dotted #c9a43e;
+  border-top: 2px solid #c9a43e;
   align-self: center;
 }
 
@@ -389,9 +389,9 @@
 
 .compendium-browser .sidebar .filter.filter-range input[type=number]:hover,
 .compendium-browser .sidebar .filter.filter-range input[type=number]:focus {
-  border-color: var(--color-border-highlight, #ff6400);
+  border-color: var(--color-border-highlight);
   outline: none;
-  box-shadow: 0 0 6px var(--color-border-highlight, #ff6400);
+  box-shadow: 0 0 6px var(--color-border-highlight);
 }
 
 /* ---- Results Area ---- */
