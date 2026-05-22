@@ -178,9 +178,7 @@
 
 /* Search input hover glow */
 .compendium-browser .sidebar .search-wrapper input:hover {
-  outline: 2px solid var(--color-border-highlight);
-  outline-offset: -1px;
-  border-radius: 2px;
+  box-shadow: 0 0 6px var(--color-border-highlight);
 }
 
 .compendium-browser .sidebar .search-wrapper search:hover,
