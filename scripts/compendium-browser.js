@@ -144,6 +144,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     #searchTimeout = null;
     #resultsListenerAttached = null;
 
+    /** @type {Set<string>|null} — checked item types from sidebar checkboxes */
+    #activeTypes = null;
+
     /* -------------------------------------------- */
     /*  Static Methods                              */
     /* -------------------------------------------- */
@@ -187,7 +190,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Separate _documentCheck filters (need full doc loading, e.g., class filter on subclasses)
         const docCheckFilters = filters.filter(f => f._documentCheck);
-        const indexFilters = filters.filter(f => !f._documentCheck);
+        const indexFilters = filters.filter(f => !f._documentCheck && f.key !== "pack");
 
         // Get matching compendium packs
         const packs = game.packs.filter(p => {
@@ -437,15 +440,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         // Search
         context.name = this.#searchName;
 
-        // Types
+        // Types — show for Items tab too, all checked by default
         const def = this.#activeTabDef;
         const types = def.types ?? [];
-        context.types = types.map((typeKey, i) => ({
-            "@key": typeKey,
+        context.types = types.map((typeKey) => ({
+            key: typeKey,
             label: typeKey.charAt(0).toUpperCase() + typeKey.slice(1),
-            chosen: i === 0,
+            chosen: def.tab === "items" ? true : false,
         }));
-        context.showTypes = types.length > 1 && def.tab !== "items";
+        context.showTypes = types.length > 1;
 
         // Filters
         const typeSet = def.types ? new Set(def.types) : null;
@@ -489,6 +492,10 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             if (!collatedSources.has(pack.metadata.id)) continue;
 
             const pkgName = pack.metadata.packageName || pack.metadata.id;
+
+            // Skip Item Piles and other utility packs
+            if (pkgName.startsWith("item-piles") || pack.metadata.id.includes("item-piles")) continue;
+
             if (seenModules.has(pkgName)) continue;
             seenModules.add(pkgName);
 
@@ -594,7 +601,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         this.#allResults = [];
         this.#loadedCount = 0;
         this.#resultsPromise = CompendiumBrowser.fetch(def.documentClass, {
-            types: def.types ? new Set(def.types) : new Set(),
+            types: (this.#activeTypes !== null) ? this.#activeTypes : (def.types ? new Set(def.types) : new Set()),
             filters,
             name: this.#searchName,
         });
@@ -941,6 +948,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         super.changeTab(tab, group, options);
         this.#activeTab = tab;
         this.#searchName = "";
+        this.#activeTypes = null;
         this.render({ parts: ["tabs", "sidebar", "results"] });
     }
 
@@ -996,8 +1004,14 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         }
     }
 
-    /** Toggle type checkboxes. */
+    /** Toggle type checkboxes — read checked types and re-render results. */
     #onSetType(event) {
+        // Read checked types from DOM before render destroys it
+        const checked = new Set();
+        this.element.querySelectorAll("[data-action='setType']").forEach(el => {
+            if (el.checked) checked.add(el.value);
+        });
+        this.#activeTypes = checked;
         this.render({ parts: ["results"] });
     }
 
