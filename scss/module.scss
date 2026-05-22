@@ -156,14 +156,14 @@
 .compendium-browser .sidebar {
   height: 100%;
   overflow-y: auto;
-  gap: 8px;
+  gap: 4px;
   padding: 12px 4px 3px 12px;
   scrollbar-gutter: stable;
 }
 
 /* ---- Search (inside sidebar) ---- */
 .compendium-browser .sidebar .search-wrapper {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .compendium-browser .sidebar .search-wrapper search {
@@ -248,7 +248,11 @@
 
 /* ---- Filters Section (inside sidebar) ---- */
 .compendium-browser .sidebar > .flexcol:last-child {
-  gap: 8px;
+  gap: 12px;
+}
+
+.compendium-browser .sidebar .filter-header {
+  margin-top: 6px;
 }
 
 .compendium-browser .sidebar .filter-header > label {
