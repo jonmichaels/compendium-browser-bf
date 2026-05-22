@@ -156,14 +156,14 @@
 .compendium-browser .sidebar {
   height: 100%;
   overflow-y: auto;
-  gap: 12px;
+  gap: 8px;
   padding: 12px 4px 3px 12px;
   scrollbar-gutter: stable;
 }
 
 /* ---- Search (inside sidebar) ---- */
 .compendium-browser .sidebar .search-wrapper {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .compendium-browser .sidebar .search-wrapper search {
@@ -306,6 +306,15 @@
 
 .compendium-browser .sidebar .filter .filter-header label > span {
   color: var(--color-text-secondary);
+}
+
+/* roboto-upper — borrowed from dnd5e, matches SOURCE section font */
+.compendium-browser .roboto-upper {
+  font-family: var(--dnd5e-font-roboto, var(--font-primary));
+  font-weight: bold;
+  font-size: var(--font-size-11);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .compendium-browser .sidebar .filter.filter-set:has(> .collapsible-content > .wrapper:empty) {

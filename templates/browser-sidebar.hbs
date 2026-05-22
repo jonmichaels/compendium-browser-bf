@@ -75,7 +75,7 @@
         </div>
         {{else if (eq type "range")}}
         <div class="filter filter-range form-group label-top" data-filter-id="{{ key }}">
-            <label>{{ localize label }}</label>
+            <label class="roboto-upper">{{ localize label }}</label>
             <div class="form-fields">
                 <input type="number" name="additional.{{ key }}.min" value="{{ value.min }}"
                        min="{{ config.min }}" max="{{ config.max }}" step="any"
