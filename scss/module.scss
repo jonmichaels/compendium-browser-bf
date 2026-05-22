@@ -176,10 +176,11 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-/* Search hover glow */
+/* Search hover glow — strong visual test */
 .compendium-browser .sidebar .search-wrapper search:hover {
-  border-color: var(--color-border-highlight);
-  box-shadow: 0 0 4px var(--color-border-highlight);
+  border-color: var(--color-border-highlight) !important;
+  box-shadow: 0 0 8px var(--color-border-highlight) !important;
+  outline: 2px solid var(--color-border-highlight) !important;
 }
 
 .compendium-browser .sidebar .search-wrapper search:focus-within {
@@ -273,13 +274,19 @@
   flex: none;
 }
 
+/* Dividing lines on filter headers — match dnd5e exactly */
+.compendium-browser .sidebar .filter-header > label {
+  display: flex !important;
+  align-items: center;
+  gap: 4px;
+}
+
 .compendium-browser .sidebar .filter-header > label::before,
 .compendium-browser .sidebar .filter-header > label::after {
   content: "";
-  flex: 1 1 0;
-  min-width: 8px;
+  flex: 1 1 auto;
+  height: 0;
   border-top: 1px dotted var(--color-border-dark-primary);
-  align-self: center;
 }
 
 /* ---- 3-state Filter (off / include / exclude) ----
