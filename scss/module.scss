@@ -176,13 +176,14 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-/* Search hover glow — strong visual test */
-.compendium-browser .sidebar .search-wrapper search:hover {
-  border-color: var(--color-border-highlight) !important;
-  box-shadow: 0 0 8px var(--color-border-highlight) !important;
-  outline: 2px solid var(--color-border-highlight) !important;
+/* Search input hover glow */
+.compendium-browser .sidebar .search-wrapper input:hover {
+  outline: 2px solid var(--color-border-highlight, #ff6400);
+  outline-offset: -1px;
+  border-radius: 2px;
 }
 
+.compendium-browser .sidebar .search-wrapper search:hover,
 .compendium-browser .sidebar .search-wrapper search:focus-within {
   border-color: var(--color-border-highlight);
   box-shadow: 0 0 4px var(--color-border-highlight);
@@ -264,8 +265,9 @@
 
 .compendium-browser .sidebar .filter-header > label {
   cursor: pointer;
-  display: flex;
+  display: flex !important;
   justify-content: center;
+  align-items: center;
   gap: 4px;
   font-size: var(--font-size-11);
 }
@@ -274,19 +276,13 @@
   flex: none;
 }
 
-/* Dividing lines on filter headers — match dnd5e exactly */
-.compendium-browser .sidebar .filter-header > label {
-  display: flex !important;
-  align-items: center;
-  gap: 4px;
-}
-
+/* Dividing lines — dotted rule extending from header text */
 .compendium-browser .sidebar .filter-header > label::before,
 .compendium-browser .sidebar .filter-header > label::after {
   content: "";
-  flex: 1 1 auto;
-  height: 0;
+  flex: 1 1 0;
   border-top: 1px dotted var(--color-border-dark-primary);
+  align-self: center;
 }
 
 /* ---- 3-state Filter (off / include / exclude) ----
@@ -393,9 +389,9 @@
 
 .compendium-browser .sidebar .filter.filter-range input[type=number]:hover,
 .compendium-browser .sidebar .filter.filter-range input[type=number]:focus {
-  --input-border-color: var(--color-border-highlight);
-  outline: 0;
-  box-shadow: 0 0 6px var(--color-border-highlight);
+  border-color: var(--color-border-highlight);
+  outline: none;
+  box-shadow: 0 0 6px var(--color-shadow-highlight, #ff6400);
 }
 
 /* ---- Results Area ---- */
