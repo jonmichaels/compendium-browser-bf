@@ -185,8 +185,8 @@
 
 .compendium-browser .sidebar .search-wrapper search:hover,
 .compendium-browser .sidebar .search-wrapper search:focus-within {
-  border-color: var(--color-border-highlight);
-  box-shadow: 0 0 4px var(--color-border-highlight);
+  border-color: var(--color-border-highlight, #ff6400);
+  box-shadow: 0 0 4px var(--color-border-highlight, #ff6400);
 }
 
 .compendium-browser .sidebar .search-icon {
@@ -280,8 +280,8 @@
 .compendium-browser .sidebar .filter-header > label::before,
 .compendium-browser .sidebar .filter-header > label::after {
   content: "";
-  flex: 1 1 0;
-  border-top: 1px dotted var(--color-border-dark-primary);
+  flex-basis: 50%;
+  border-top: 1px dotted #c9a43e;
   align-self: center;
 }
 
@@ -389,9 +389,9 @@
 
 .compendium-browser .sidebar .filter.filter-range input[type=number]:hover,
 .compendium-browser .sidebar .filter.filter-range input[type=number]:focus {
-  border-color: var(--color-border-highlight);
+  border-color: var(--color-border-highlight, #ff6400);
   outline: none;
-  box-shadow: 0 0 6px var(--color-shadow-highlight, #ff6400);
+  box-shadow: 0 0 6px var(--color-border-highlight, #ff6400);
 }
 
 /* ---- Results Area ---- */
