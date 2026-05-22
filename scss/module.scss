@@ -176,10 +176,11 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
-/* Search input hover glow — matches range input exactly */
+/* Search input hover glow */
 .compendium-browser .sidebar .search-wrapper input:hover {
-  outline: none;
-  box-shadow: 0 0 6px var(--color-border-highlight) !important;
+  outline: 2px solid var(--color-border-highlight, #c9a43e);
+  outline-offset: -1px;
+  border-radius: 2px;
 }
 
 .compendium-browser .sidebar .search-wrapper search:hover,
