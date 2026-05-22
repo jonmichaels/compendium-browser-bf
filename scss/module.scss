@@ -176,6 +176,12 @@
   background: rgba(0, 0, 0, 0.1);
 }
 
+/* Search hover glow */
+.compendium-browser .sidebar .search-wrapper search:hover {
+  border-color: var(--color-border-highlight);
+  box-shadow: 0 0 4px var(--color-border-highlight);
+}
+
 .compendium-browser .sidebar .search-wrapper search:focus-within {
   border-color: var(--color-border-highlight);
   box-shadow: 0 0 4px var(--color-border-highlight);
@@ -270,7 +276,8 @@
 .compendium-browser .sidebar .filter-header > label::before,
 .compendium-browser .sidebar .filter-header > label::after {
   content: "";
-  flex-basis: 50%;
+  flex: 1 1 0;
+  min-width: 8px;
   border-top: 1px dotted var(--color-border-dark-primary);
   align-self: center;
 }
