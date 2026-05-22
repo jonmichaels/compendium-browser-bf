@@ -528,6 +528,7 @@
 /* Entry rows — subtle but visible background on all rows */
 .compendium-browser .results ol li .item-row {
   background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Alternating entry row backgrounds — slightly stronger zebra */
