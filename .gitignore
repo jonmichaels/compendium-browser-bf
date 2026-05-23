@@ -4,3 +4,4 @@ index.js
 styles/module.css
 *.zip
 .DS_Store
+.hermes/
