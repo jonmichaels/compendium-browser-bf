@@ -2,6 +2,9 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 import { getFilterDefinitions, applyAllFilters } from "./compendium-browser-filters.js";
 import { SourceConfig } from "./source-config.js";
 
+/** @type {CompendiumBrowser|null} — currently open browser instance */
+var _instance = null;
+
 export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2) {
     static DEFAULT_OPTIONS = {
         id: "compendium-browser-bf",
@@ -326,11 +329,15 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Toggle the compendium browser open/closed.
      */
     static toggleBrowser() {
-        const existing = Object.values(ui.windows).find(
-            w => w.id === "compendium-browser-bf"
-        );
-        if (existing) existing.close();
-        else new CompendiumBrowser().render({ force: true });
+        if (_instance && !_instance._destroyed) {
+            _instance.close();
+            _instance = null;
+        } else {
+            const browser = new CompendiumBrowser();
+            _instance = browser;
+            browser.addEventListener("close", () => { _instance = null; }, { once: true });
+            browser.render({ force: true });
+        }
     }
 
     /**
@@ -1139,12 +1146,13 @@ export function initCompendiumBrowser() {
     });
 
     // Listen for source configuration changes — close and reopen any open browser
-    // (proven pattern: same as compendium directory button click handler)
     Hooks.on("compendium-browser-bf.sourcesChanged", () => {
-        const existing = Object.values(ui.windows).find(w => w.id === "compendium-browser-bf");
-        if (existing) {
-            existing.close();
-            new CompendiumBrowser().render({ force: true });
+        if (_instance && !_instance._destroyed) {
+            _instance.close();
+            const browser = new CompendiumBrowser();
+            _instance = browser;
+            browser.addEventListener("close", () => { _instance = null; }, { once: true });
+            browser.render({ force: true });
         }
     });
 }
