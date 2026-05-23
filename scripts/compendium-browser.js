@@ -322,9 +322,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         return sorted;
     }
 
-    /* -------------------------------------------- */
-    /*  Form Handler                                */
-    /* -------------------------------------------- */
+    /**
+     * Toggle the compendium browser open/closed.
+     */
+    static toggleBrowser() {
+        const existing = Object.values(ui.windows).find(
+            w => w.id === "compendium-browser-bf"
+        );
+        if (existing) existing.close();
+        else new CompendiumBrowser().render({ force: true });
+    }
 
     /**
      * Handle form submission when in selection mode.
@@ -1111,19 +1118,23 @@ export function initCompendiumBrowser() {
         default: {},
     });
 
+    // Register hotkey toggle
+    game.keybindings.register("compendium-browser-bf", "toggleBrowser", {
+        name: "compendium-browser-bf.Keybindings.ToggleBrowser",
+        hint: "compendium-browser-bf.Keybindings.ToggleBrowserHint",
+        editable: [{ key: "KeyB", modifiers: ["Shift", "Alt"] }],
+        onDown: () => CompendiumBrowser.toggleBrowser(),
+        restricted: false,
+        precedence: CONST.KEYBINDING_PRECEDENCE.NORMAL,
+    });
+
     // Inject "Compendium Browser" button into compendium directory sidebar
     Hooks.on("renderCompendiumDirectory", (app, html, data) => {
         const button = document.createElement("button");
         button.className = "compendium-browser-btn";
         button.type = "button";
         button.innerHTML = `<i class="fas fa-book-open-reader"></i> ${game.i18n.localize("compendium-browser-bf.OpenBrowser")}`;
-        button.addEventListener("click", () => {
-            const existing = Object.values(ui.windows).find(
-                w => w.id === "compendium-browser-bf"
-            );
-            if (existing) existing.close();
-            else new CompendiumBrowser().render({ force: true });
-        });
+        button.addEventListener("click", () => CompendiumBrowser.toggleBrowser());
         html.querySelector(".header-actions")?.append(button);
     });
 

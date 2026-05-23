@@ -4,7 +4,7 @@
 
 [![Foundry VTT](https://img.shields.io/badge/Foundry-v13-orange)](https://foundryvtt.com)
 [![Black Flag](https://img.shields.io/badge/System-Black%20Flag%20%2F%20ToV-blue)](https://github.com/koboldpress/black-flag)
-[![Version](https://img.shields.io/badge/Version-1.0.0-green)](https://github.com/jonmichaels/compendium-browser-bf/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.1-green)](https://github.com/jonmichaels/compendium-browser-bf/releases)
 
 A compendium browser for [Black Flag Roleplaying (Tales of the Valiant)](https://koboldpress.com/tales-of-the-valiant/). Browse and filter spells, items, monsters, classes, lineages, heritages, talents, and more. Ported from the dnd5e built-in compendium browser.
 
@@ -25,6 +25,7 @@ A compendium browser for [Black Flag Roleplaying (Tales of the Valiant)](https:/
 | **Document preview** | Click any entry title to open its full document sheet |
 | **Row dividers** | Subtle gray lines between result rows for readability |
 | **Hover glow** | Visual feedback on search and filter inputs |
+| **Hotkey toggle** | `Shift+Alt+B` opens or closes the browser from anywhere in Foundry |
 
 ## Installation
 

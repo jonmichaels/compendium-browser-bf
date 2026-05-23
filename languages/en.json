@@ -44,6 +44,10 @@
     "OpenBrowser": "Open Compendium Browser",
     "SearchResults": "Search results",
     "SourceHint": "Select which compendium packs to include when browsing. Disabled packs will not appear in search results.",
+    "Keybindings": {
+      "ToggleBrowser": "Toggle Compendium Browser",
+      "ToggleBrowserHint": "Open or close the Compendium Browser window."
+    },
     "Column": {
       "Results": "Results",
       "Source": "Source"
