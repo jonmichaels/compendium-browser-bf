@@ -7,7 +7,7 @@ Guidance for AI coding agents working on `compendium-browser-bf`.
 Foundry VTT v13/v14 module that ports the dnd5e compendium browser UI to the Black Flag / Tales of the Valiant (`black-flag`) system.
 
 - Module id: `compendium-browser-bf`
-- System dependency: `black-flag` >= 3.0.0
+- System dependency: `black-flag` >= 2.0.0; verified with Black Flag v3.0.0
 - Entry point: `scripts/main.js` -> `initCompendiumBrowser()`
 - Built output committed to repo: `index.js`, `index.js.map`, `styles/module.css`, `styles/module.css.map`
 - Manifest: `module.json` (do **not** add `compatibility.maximum`)
