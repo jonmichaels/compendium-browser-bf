@@ -592,16 +592,16 @@
   color: var(--color-text-primary);
 }
 
-/* Light theme contrast fixes */
-body.theme-light .compendium-browser .window-header .header-control.configure-sources,
-.compendium-browser.theme-light .window-header .header-control.configure-sources,
-body.theme-light .compendium-browser .window-content .tabs nav .item,
-.compendium-browser.theme-light .window-content .tabs nav .item,
-body.theme-light .compendium-browser .results .items-header .item-name,
-.compendium-browser.theme-light .results .items-header .item-name,
-body.theme-light .compendium-browser .results .item-header.item-source,
-.compendium-browser.theme-light .results .item-header.item-source {
-  color: var(--color-dark-2, #222);
+/* Light theme contrast fixes for Foundry v13/v14 theme class placement. */
+.theme-light #compendium-browser-bf > header > button.header-control.configure-sources,
+#compendium-browser-bf.theme-light > header > button.header-control.configure-sources,
+.theme-light #compendium-browser-bf-tabs > a.item.control,
+#compendium-browser-bf.theme-light #compendium-browser-bf-tabs > a.item.control,
+.theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > h3.item-name,
+#compendium-browser-bf.theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > h3.item-name,
+.theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > div.item-source,
+#compendium-browser-bf.theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > div.item-source {
+  color: var(--color-text-primary, #222) !important;
 }
 
 /* ---- Sidebar Button (in Compendium Directory) ---- */
