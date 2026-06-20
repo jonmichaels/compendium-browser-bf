@@ -592,6 +592,18 @@
   color: var(--color-text-primary);
 }
 
+/* Light theme contrast fixes */
+body.theme-light .compendium-browser .window-header .header-control.configure-sources,
+.compendium-browser.theme-light .window-header .header-control.configure-sources,
+body.theme-light .compendium-browser .window-content .tabs nav .item,
+.compendium-browser.theme-light .window-content .tabs nav .item,
+body.theme-light .compendium-browser .results .items-header .item-name,
+.compendium-browser.theme-light .results .items-header .item-name,
+body.theme-light .compendium-browser .results .item-header.item-source,
+.compendium-browser.theme-light .results .item-header.item-source {
+  color: var(--color-dark-2, #222);
+}
+
 /* ---- Sidebar Button (in Compendium Directory) ---- */
 .compendium-sidebar .compendium-browser-btn {
   flex: 0 0 100%;
