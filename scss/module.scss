@@ -419,9 +419,18 @@
   background: none;
   box-shadow: none;
   outline: none;
-  padding: 4px 0;
+  padding: 6px;
   color: var(--color-text-primary);
   -webkit-text-fill-color: var(--color-text-primary);
+}
+
+.theme-light .compendium-browser .sidebar .filter.filter-range .sep,
+.compendium-browser.theme-light .sidebar .filter.filter-range .sep {
+  align-self: stretch;
+  height: auto;
+  padding: 0 4px;
+  margin: 0 -4px;
+  background: url("/ui/parchment.jpg") repeat;
 }
 
 .theme-light .compendium-browser .sidebar .filter.filter-range input[type=number]:hover,
