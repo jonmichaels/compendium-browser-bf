@@ -603,17 +603,19 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             }
         }
 
-        // Read source filter values from DOM (not in cachedFilterDefs)
+        // Read source filter values from DOM (not in cachedFilterDefs).
+        // Return a new array so repeated reads do not accumulate duplicate synthetic filters.
+        const result = [...filters];
         const sourceFilterEl = html.querySelector('[data-filter-id="pack"]');
         if (sourceFilterEl) {
             const sourceChecked = {};
             sourceFilterEl.querySelectorAll(".filter-state").forEach(el => {
-                const key = el.dataset.key?.split(".")[1];  // "source.packId" → "packId"
+                const key = el.dataset.key?.split(".")[1];  // "source.BFRD" → "BFRD"
                 const val = parseInt(el.dataset.value, 10) || 0;
                 if (key && val !== 0) sourceChecked[key] = val;
             });
             if (Object.keys(sourceChecked).length > 0) {
-                filters.push({
+                result.push({
                     key: "pack",
                     type: "set",
                     value: sourceChecked,
@@ -621,7 +623,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             }
         }
 
-        return filters;
+        return result;
     }
 
     /**

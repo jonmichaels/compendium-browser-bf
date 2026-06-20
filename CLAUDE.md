@@ -64,7 +64,7 @@ Black Flag data paths currently relied on:
 
 - Spell circle: `system.circle.base`
 - Spell school: `system.school`
-- Source Book: `system.source.book` (display abbreviation in result rows; sidebar resolves full label from `CONFIG.BlackFlag.sourceBooks` with module fallback list)
+- Source Book: `system.source.book` (display Source Book key in result rows; sidebar resolves full label from `CONFIG.BlackFlag.sourceBooks` with module fallback list)
 - Source page/fallback: `system.source.page`, `system.source.fallback`
 - Spell source/tags: `system.source`, `system.tags`
 - Item price: `system.price.value`
