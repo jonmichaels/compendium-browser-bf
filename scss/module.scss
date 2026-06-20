@@ -596,12 +596,21 @@
 .theme-light #compendium-browser-bf > header > button.header-control.configure-sources,
 #compendium-browser-bf.theme-light > header > button.header-control.configure-sources,
 .theme-light #compendium-browser-bf-tabs > a.item.control,
+.theme-light #compendium-browser-bf-tabs > a.item.control > i,
 #compendium-browser-bf.theme-light #compendium-browser-bf-tabs > a.item.control,
+#compendium-browser-bf.theme-light #compendium-browser-bf-tabs > a.item.control > i,
 .theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > h3.item-name,
 #compendium-browser-bf.theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > h3.item-name,
 .theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > div.item-source,
 #compendium-browser-bf.theme-light #compendium-browser-bf-results > section.items-list > div.card > div.header > div.item-source {
-  color: var(--color-text-primary, #222) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+.theme-light #compendium-browser-bf > header > button.header-control.configure-sources::before,
+#compendium-browser-bf.theme-light > header > button.header-control.configure-sources::before {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
 /* ---- Sidebar Button (in Compendium Directory) ---- */
