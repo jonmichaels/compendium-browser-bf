@@ -2,9 +2,10 @@
 
 > **⚠️ Disclaimer:** This module was created by an AI coding agent (Hephaestus, via Hermes Agent) under the direction of Jon Michaels. While tested and functional, users should verify behavior in their own games before relying on it in critical sessions.
 
-[![Foundry VTT](https://img.shields.io/badge/Foundry-v13-orange)](https://foundryvtt.com)
-[![Black Flag](https://img.shields.io/badge/System-Black%20Flag%20%2F%20ToV-blue)](https://github.com/koboldpress/black-flag)
-[![Version](https://img.shields.io/badge/Version-1.0.1-green)](https://github.com/jonmichaels/compendium-browser-bf/releases)
+[![Foundry VTT](https://img.shields.io/badge/Foundry-v13--v14-orange)](https://foundryvtt.com)
+[![Black Flag](https://img.shields.io/badge/System-Black%20Flag%20%2F%20ToV%20v3-blue)](https://github.com/koboldpress/black-flag)
+[![Version](https://img.shields.io/badge/Version-1.1.0-green)](https://github.com/jonmichaels/compendium-browser-bf/releases)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey)](LICENSE)
 
 A compendium browser for [Black Flag Roleplaying (Tales of the Valiant)](https://koboldpress.com/tales-of-the-valiant/). Browse and filter spells, items, monsters, classes, lineages, heritages, talents, and more. Ported from the dnd5e built-in compendium browser.
 
@@ -20,6 +21,9 @@ A compendium browser for [Black Flag Roleplaying (Tales of the Valiant)](https:/
 | **Type checkboxes** | Filter by item subtypes on tabs that support them |
 | **Name search** | Debounced text search across compendium indexes |
 | **Source configuration** | GM-configurable compendium source selection per package |
+| **Source book display** | Results and sidebar filters use per-document Source Book metadata, including parser-created records in mixed-source modules |
+| **Light theme support** | Light-theme headers, icons, search fields, range fields, and source configuration controls have corrected contrast and sizing |
+| **Foundry v14 / Black Flag v3 compatibility** | Verified with Foundry v14 and Black Flag v3 while preserving Foundry v13 support |
 | **Drag-and-drop** | Drag entries directly into actor sheets or the sidebar |
 | **Lazy loading** | Scroll to load more results in large collections |
 | **Document preview** | Click any entry title to open its full document sheet |
@@ -37,21 +41,31 @@ A compendium browser for [Black Flag Roleplaying (Tales of the Valiant)](https:/
 **Manual:**
 Download the latest release zip and extract to `Data/modules/compendium-browser-bf/`.
 
-## Requirements
+## Requirements / System Compatibility
 
-- **Foundry VTT** v13+
-- **Black Flag Roleplaying** (Tales of the Valiant) system v2.0+
+| System | Status |
+|--------|--------|
+| **Foundry VTT** | ✅ Supported v13; verified v14 |
+| **Black Flag Roleplaying / Tales of the Valiant** | ✅ Supported v3.0+ |
+
+## What's New in v1.1.0
+
+- Fixed Source Book display for mixed-source compendium modules, including parser-created records that store source metadata in `system.description.source.book`.
+- Added parser-known Source Book labels for Black Flag / Tales of the Valiant source keys.
+- Fixed Light theme contrast for the browser gear icon, left tab icons, and result-list headers.
+- Fixed Light theme input styling for sidebar range filters and Settings package filtering.
+- Verified compatibility with Foundry v14 and Black Flag v3.
 
 ## How It Works
 
-1. Activate the module in your world's Module Management
-2. Open the Compendium Packs sidebar
-3. Click the **📖 Open Compendium Browser** button at the top
-4. Select a tab — the sidebar loads filters relevant to that content type
-5. Use the sidebar to filter results or search by name
-6. Click an entry title to open its full document sheet
+1. Activate the module in your world's Module Management.
+2. Open the Compendium Packs sidebar.
+3. Click the **📖 Open Compendium Browser** button at the top.
+4. Select a tab — the sidebar loads filters relevant to that content type.
+5. Use the sidebar to filter results or search by name.
+6. Click an entry title to open its full document sheet.
 
-Filters are tab-specific and resolve from the compendium index for fast filtering. Class filter on the Subclasses screen loads full documents for accurate parent class matching.
+Filters are tab-specific and resolve from the compendium index for fast filtering. Class filter on the Subclasses screen loads full documents for accurate parent class matching. Source filters prefer per-document Source Book metadata over package/module labels so mixed-source modules display correctly.
 
 ## Development
 
