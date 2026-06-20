@@ -394,6 +394,47 @@
   box-shadow: 0 0 6px var(--color-border-highlight);
 }
 
+/* Light theme: range inputs match the main Search control styling. */
+.theme-light .compendium-browser .sidebar .filter.filter-range > .form-fields,
+.compendium-browser.theme-light .sidebar .filter.filter-range > .form-fields {
+  border: 1px solid var(--color-border-dark-primary);
+  border-radius: 4px;
+  padding: 0 4px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.theme-light .compendium-browser .sidebar .filter.filter-range > .form-fields:hover,
+.theme-light .compendium-browser .sidebar .filter.filter-range > .form-fields:focus-within,
+.compendium-browser.theme-light .sidebar .filter.filter-range > .form-fields:hover,
+.compendium-browser.theme-light .sidebar .filter.filter-range > .form-fields:focus-within {
+  border-color: var(--color-border-highlight);
+  box-shadow: 0 0 4px var(--color-border-highlight);
+}
+
+.theme-light .compendium-browser .sidebar .filter.filter-range input[type=number],
+.compendium-browser.theme-light .sidebar .filter.filter-range input[type=number] {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  outline: none;
+  padding: 4px 0;
+  color: var(--color-text-primary);
+  -webkit-text-fill-color: var(--color-text-primary);
+}
+
+.theme-light .compendium-browser .sidebar .filter.filter-range input[type=number]:hover,
+.theme-light .compendium-browser .sidebar .filter.filter-range input[type=number]:focus,
+.compendium-browser.theme-light .sidebar .filter.filter-range input[type=number]:hover,
+.compendium-browser.theme-light .sidebar .filter.filter-range input[type=number]:focus {
+  border: none;
+  box-shadow: none;
+  outline: 2px solid var(--color-border-highlight, #c9a43e);
+  outline-offset: -1px;
+  border-radius: 2px;
+}
+
 /* ---- Results Area ---- */
 .compendium-browser .results {
   --results-padding: 6px;
@@ -648,6 +689,43 @@
 
 #compendium-browser-bf-source-config .sidebar search input {
   flex: 1;
+}
+
+/* Light theme: Settings package filter matches the browser Search control styling. */
+.theme-light #compendium-browser-bf-source-config .sidebar search,
+#compendium-browser-bf-source-config.theme-light .sidebar search {
+  border: 1px solid var(--color-border-dark-primary);
+  border-radius: 4px;
+  padding: 0 4px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.theme-light #compendium-browser-bf-source-config .sidebar search:hover,
+.theme-light #compendium-browser-bf-source-config .sidebar search:focus-within,
+#compendium-browser-bf-source-config.theme-light .sidebar search:hover,
+#compendium-browser-bf-source-config.theme-light .sidebar search:focus-within {
+  border-color: var(--color-border-highlight);
+  box-shadow: 0 0 4px var(--color-border-highlight);
+}
+
+.theme-light #compendium-browser-bf-source-config .sidebar search input,
+#compendium-browser-bf-source-config.theme-light .sidebar search input {
+  border: none;
+  background: none;
+  box-shadow: none;
+  outline: none;
+  padding: 4px 0;
+  color: var(--color-text-primary);
+  -webkit-text-fill-color: var(--color-text-primary);
+}
+
+.theme-light #compendium-browser-bf-source-config .sidebar search input:hover,
+.theme-light #compendium-browser-bf-source-config .sidebar search input:focus,
+#compendium-browser-bf-source-config.theme-light .sidebar search input:hover,
+#compendium-browser-bf-source-config.theme-light .sidebar search input:focus {
+  outline: 2px solid var(--color-border-highlight, #c9a43e);
+  outline-offset: -1px;
+  border-radius: 2px;
 }
 
 #compendium-browser-bf-source-config .package-list {
