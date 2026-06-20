@@ -74,24 +74,16 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static BATCHING = { MARGIN: 50, SIZE: 50 };
     static SEARCH_DELAY = 100;
 
-    static PACK_SOURCE_NAMES = {
-        "black-flag": "Black Flag Reference Document",
-        "kp-tov-players-guide": "ToV Player\u2019s Guide",
-        "kp-tov-game-masters-guide": "ToV Game Master\u2019s Guide",
-        "kp-tov-monster-vault": "ToV Monster Vault",
-        "kp-tov-labyrinth-worldbook": "ToV Labyrinth Worldbook",
-        "kp-tov-labyrinth-adventures": "ToV Labyrinth Adventures",
-        "kp-tov-dungeons-ruins": "ToV Dungeons & Ruins",
-    };
-
-    static PACK_SOURCE_ABBREV = {
-        "black-flag": "BF SRD",
-        "kp-tov-players-guide": "ToV PG",
-        "kp-tov-game-masters-guide": "ToV GMG",
-        "kp-tov-monster-vault": "ToV MV",
-        "kp-tov-labyrinth-worldbook": "ToV LW",
-        "kp-tov-labyrinth-adventures": "ToV LA",
-        "kp-tov-dungeons-ruins": "ToV DR",
+    static SOURCE_BOOK_LABELS = {
+        "BFRD": "Black Flag Reference Document",
+        "KP-LH1": "Lineages & Heritages Supplement 1",
+        "ToV PG": "Player\u2019s Guide",
+        "ToV-GMG": "Game Master's Guide",
+        "ToV-MV1": "Monster Vault I",
+        "ToV-MV2": "Monster Vault 2",
+        "ToV-LW": "Labyrinth Worldbook",
+        "ToV-LA": "Labyrinth Adventures",
+        "ToV-DR": "Dungeons & Ruins",
     };
 
     /* -------------------------------------------- */
@@ -215,14 +207,12 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
                 // Name filter (case-insensitive prefix match)
                 if (name && !entry.name.toLowerCase().startsWith(name.toLowerCase())) continue;
 
-                // Compendium pack source filter (3-state: 0=off, 1=include-only, -1=exclude)
+                // Source Book filter (3-state: 0=off, 1=include-only, -1=exclude)
                 const sourceFilter = filters.find(f => f.key === "pack" && f.type === "set");
                 if (sourceFilter?.value) {
                     const values = sourceFilter.value;
-                    const matchKey = Object.keys(values).find(k =>
-                        pack.metadata.id.startsWith(k) || pack.metadata.packageName?.startsWith(k)
-                    );
-                    const state = matchKey ? values[matchKey] : 0;
+                    const sourceBook = this._getSourceBook(entry, pack);
+                    const state = sourceBook ? (values[sourceBook] || 0) : 0;
                     const hasIncludes = Object.values(values).some(v => v === 1);
 
                     if (state === -1) continue;             // explicitly excluded — drop this entry
@@ -323,6 +313,68 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             sorted[k] = choices[k];
         });
         return sorted;
+    }
+
+    /**
+     * Extract the Black Flag Source Book key from an index entry, falling back
+     * to the package's single registered source book when the document has not
+     * stored an explicit value yet.
+     * @param {object} entry - Compendium index entry or document data.
+     * @param {CompendiumCollection} [pack] - Source compendium pack.
+     * @returns {string}
+     */
+    static _getSourceBook(entry, pack) {
+        const source = entry?.system?.source ?? entry?.["system.source"];
+        const book = source?.book ?? entry?.["system.source.book"];
+        if (book) return book;
+
+        const sourceBooks = pack?.metadata?.flags?.["black-flag"]?.sourceBooks
+            ?? game.modules.get(pack?.metadata?.packageName)?.flags?.["black-flag"]?.sourceBooks
+            ?? (pack?.metadata?.packageType === "system" ? game.system.flags?.["black-flag"]?.sourceBooks : null);
+        const keys = Object.keys(sourceBooks ?? {});
+        return keys.length === 1 ? keys[0] : "";
+    }
+
+    /**
+     * Resolve a Source Book key to its full display label.
+     * @param {string} book - Source Book key (e.g. BFRD, ToV-MV1).
+     * @returns {string}
+     */
+    static _getSourceBookLabel(book) {
+        const label = CONFIG.BlackFlag?.sourceBooks?.[book]
+            ?? CompendiumBrowser.SOURCE_BOOK_LABELS[book]
+            ?? book;
+        return game.i18n.localize(label);
+    }
+
+    /**
+     * Build a deduplicated Source Book list for the current tab.
+     * @param {string} documentClass - "Item" or "Actor".
+     * @param {Set<string>|null} types - Active tab document types.
+     * @returns {Promise<Array<{key: string, label: string}>>}
+     */
+    static async _getSourceBookChoices(documentClass, types) {
+        const collatedSources = this.collateSources();
+        const books = new Set();
+        const packs = game.packs.filter(p => {
+            if (p.metadata.type !== documentClass) return false;
+            const packTypes = p.metadata.flags?.["black-flag"]?.types;
+            if (packTypes && types?.size > 0 && !packTypes.some(t => types.has(t))) return false;
+            return collatedSources.has(p.metadata.id);
+        });
+
+        for (const pack of packs) {
+            const entries = await pack.getIndex({ fields: ["type", "system.source"] });
+            for (const entry of entries) {
+                if (types?.size > 0 && !types.has(entry.type)) continue;
+                const book = this._getSourceBook(entry, pack);
+                if (book) books.add(book);
+            }
+        }
+
+        return Array.from(books)
+            .map(key => ({ key, label: this._getSourceBookLabel(key) }))
+            .sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
     }
 
     /**
@@ -497,36 +549,8 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
             this.#cachedFilterDefs = [...specialFilters, ...context.additional];
         }
 
-        // Sources — deduplicate by packageName, use abbreviation lookup
-        const collatedSources = CompendiumBrowser.collateSources();
-        context.sources = [];
-        const seenModules = new Set();
-        for (const pack of game.packs) {
-            if (pack.metadata.type !== def.documentClass) continue;
-            if (!collatedSources.has(pack.metadata.id)) continue;
-
-            const pkgName = pack.metadata.packageName || pack.metadata.id;
-
-            // Skip Item Piles and other utility packs
-            if (pkgName.startsWith("item-piles") || pack.metadata.id.includes("item-piles")) continue;
-
-            if (seenModules.has(pkgName)) continue;
-            seenModules.add(pkgName);
-
-            // Look up full name by matching pack ID or packageName prefix
-            let label = null;
-            for (const [key, val] of Object.entries(CompendiumBrowser.PACK_SOURCE_NAMES)) {
-                if (pack.metadata.id.startsWith(key) || pkgName.startsWith(key)) {
-                    label = val;
-                    break;
-                }
-            }
-
-            context.sources.push({
-                key: pkgName,
-                label: label || (pack.metadata.label || pack.metadata.packageName || pack.metadata.id).split(" ").slice(0, 3).join(" "),
-            });
-        }
+        // Sources — deduplicated Source Book values from the actual documents.
+        context.sources = await CompendiumBrowser._getSourceBookChoices(def.documentClass, typeSet);
 
         return context;
     }
@@ -682,31 +706,9 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      * Build a display-ready entry object from a compendium index entry.
      */
     _buildEntry(entry) {
-        // Determine source: prefer pack abbreviation over document data
-        let source = "";
-
-        // 1. Check PACK_SOURCE_ABBREV by matching pack IDs that start with known keys
-        const packId = entry.pack || "";
-        const pkgName = entry.packageName || "";
-        for (const [key, abbrev] of Object.entries(CompendiumBrowser.PACK_SOURCE_ABBREV)) {
-            if (packId.startsWith(key) || pkgName.startsWith(key)) {
-                source = abbrev;
-                break;
-            }
-        }
-
-        // 2. Fallback: document's system.source (handle both nested and flat getIndex results)
-        if (!source) {
-            const src = entry.system?.source ?? entry["system.source"];
-            if (typeof src === "string") source = src;
-            else if (Array.isArray(src)) source = src.join(", ");
-            else if (src?.value) source = src.value;
-        }
-
-        // 3. Final fallback: shortened pack label
-        if (!source && entry.packLabel) {
-            source = entry.packLabel.split(" ").slice(0, 3).join(" ");
-        }
+        // Display the document's Source Book key (e.g. BFRD, ToV-MV1), not the compendium package.
+        const pack = game.packs.get(entry.pack);
+        const source = CompendiumBrowser._getSourceBook(entry, pack);
         return {
             ...entry,
             name: entry.name,
