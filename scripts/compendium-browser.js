@@ -77,6 +77,11 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
     static SOURCE_BOOK_LABELS = {
         "BFRD": "Black Flag Reference Document",
         "KP-LH1": "Lineages & Heritages Supplement 1",
+        "KP-MLH": "Midgard Lineages & Heritages",
+        "KP-PG2": "KP Player's Guide 2",
+        "KP-NW": "KP Northlands Worldbook",
+        "KP-NS": "KP Northlands Sagas",
+        "KP-DR": "KP Dungeons & Ruins",
         "ToV PG": "Player\u2019s Guide",
         "ToV-GMG": "Game Master's Guide",
         "ToV-MV1": "Monster Vault I",
@@ -178,7 +183,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
 
         // Collect all needed index field paths (never request "system" as a broad key —
         // Foundry's getIndex → setProperty chain crashes on primitives with 'type' in 1)
-        const fieldSet = new Set(["name", "img", "type", "system.source"]);
+        const fieldSet = new Set(["name", "img", "type", "system.source", "system.description.source"]);
         for (const f of filters) {
             if (f._keyPath) fieldSet.add(f._keyPath);
         }
@@ -325,7 +330,11 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
      */
     static _getSourceBook(entry, pack) {
         const source = entry?.system?.source ?? entry?.["system.source"];
-        const book = source?.book ?? entry?.["system.source.book"];
+        const descriptionSource = entry?.system?.description?.source ?? entry?.["system.description.source"];
+        const book = source?.book
+            ?? entry?.["system.source.book"]
+            ?? descriptionSource?.book
+            ?? entry?.["system.description.source.book"];
         if (book) return book;
 
         const sourceBooks = pack?.metadata?.flags?.["black-flag"]?.sourceBooks
@@ -364,7 +373,7 @@ export class CompendiumBrowser extends HandlebarsApplicationMixin(ApplicationV2)
         });
 
         for (const pack of packs) {
-            const entries = await pack.getIndex({ fields: ["type", "system.source"] });
+            const entries = await pack.getIndex({ fields: ["type", "system.source", "system.description.source"] });
             for (const entry of entries) {
                 if (types?.size > 0 && !types.has(entry.type)) continue;
                 const book = this._getSourceBook(entry, pack);
