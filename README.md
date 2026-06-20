@@ -48,14 +48,6 @@ Download the latest release zip and extract to `Data/modules/compendium-browser-
 | **Foundry VTT** | ✅ Supported v13; verified v14 |
 | **Black Flag Roleplaying / Tales of the Valiant** | ✅ Supported v2.0+; verified v3.0 |
 
-## What's New in v1.1.0
-
-- Fixed Source Book display for mixed-source compendium modules, including parser-created records that store source metadata in `system.description.source.book`.
-- Added parser-known Source Book labels for Black Flag / Tales of the Valiant source keys.
-- Fixed Light theme contrast for the browser gear icon, left tab icons, and result-list headers.
-- Fixed Light theme input styling for sidebar range filters and Settings package filtering.
-- Verified compatibility with Foundry v14 and Black Flag v3 while preserving minimum support for Foundry v13 and Black Flag v2.
-
 ## How It Works
 
 1. Activate the module in your world's Module Management.
